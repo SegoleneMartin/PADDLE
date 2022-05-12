@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import math
 
+
 class CategoriesSampler():
     """
             CategorySampler
@@ -29,7 +30,7 @@ class CategoriesSampler():
                              Query data and labels class sequence is :
                                [a a a a a a a a b b b b b b b c c c c c d d d d d e e e e e ...]
     """
-    def __init__(self, label, n_batch, n_cls, s_shot, q_shot, balanced, alpha = 2):
+    def __init__(self, label, n_batch, n_cls, s_shot, q_shot, balanced, alpha=2):
         self.n_batch = n_batch  # the number of iterations in the dataloader
         self.n_cls = n_cls
         self.s_shot = s_shot
@@ -61,9 +62,6 @@ class CategoriesSampler():
 
             query = []
             alpha = self.alpha * np.ones(self.n_cls)
-            #alpha = self.alpha * np.array([0.2,0.8]) #1
-            #alpha = self.alpha * np.array([0.1,0.9]) #2
-
             if self.balanced == 'balanced':
                 query_samples = np.repeat(self.q_shot, self.n_cls)
             else:

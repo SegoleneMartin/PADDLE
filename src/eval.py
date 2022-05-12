@@ -43,7 +43,7 @@ class Evaluator:
             loader_info.update({'path': self.args.target_data_path,
                                 'split_dir': self.args.target_split_dir})
 
-        train_set = get_dataset('train', args=self.args, **loader_info)
+        train_set = get_dataset('train', args.train_data_path, args=self.args, **loader_info)
         dataset['train_loader'] = train_set
 
         test_set = get_dataset(self.args.used_set, args=self.args, **loader_info)
