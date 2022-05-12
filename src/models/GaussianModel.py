@@ -5,12 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class GaussianModel(object):
-    def __init__(self, device, n_ways, lam):
+    def __init__(self, device, n_ways, num_classes_test, lam):
         self.device = device
         self.mus = None  # shape [n_runs][n_ways][n_nfeat]
         self.n_ways = n_ways
         self.lam = lam
-        self.num_classes = 20
+        self.num_classes = num_classes_test
 
     def clone(self):
         other = GaussianModel(self.n_ways)

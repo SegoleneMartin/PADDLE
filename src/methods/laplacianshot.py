@@ -26,7 +26,7 @@ class LaplacianShot(object):
         self.norm_type = args.norm_type
         self.iter = args.iter
         self.n_ways = args.n_ways
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file

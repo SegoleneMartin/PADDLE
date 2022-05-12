@@ -13,7 +13,7 @@ class PT_MAP(object):
     def __init__(self, model, device, log_file, args):
         self.device = device
         self.n_ways = args.n_ways
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
         self.number_tasks = args.batch_size
         self.alpha = args.alpha
         self.beta = args.beta
@@ -44,7 +44,7 @@ class PT_MAP(object):
         return m, pm
 
     def get_GaussianModel(self):
-        method_info = {'device': self.device, 'lam': self.lam, 'n_ways': self.n_ways}
+        method_info = {'device': self.device, 'lam': self.lam, 'num_classes_test': self.num_classes, 'n_ways': self.n_ways}
         return GaussianModel(**method_info)
 
     def power_transform(self, support, query):

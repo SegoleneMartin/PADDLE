@@ -42,6 +42,7 @@ EVAL:
     number_tasks: 1000 # Number of tasks to evaluate
     batch_size: 1000
     n_ways: 5
+    num_classes_test : 20
     n_query: 15 # Balanced case: 15 query data per class
     balanced: 'dirichlet' # ('balanced' | 'dirichlet')
     alpha_dirichlet: 1.0

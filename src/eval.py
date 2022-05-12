@@ -110,30 +110,26 @@ class Evaluator:
         elif self.args.method == 'BDCSPN':
             param = self.args.temp
 
-        name_file_1 = 'params_acc/{}_alpha{}_shots{}.txt'.format(self.args.method, self.args.alpha_dirichlet, self.args.shots[0])
-        #name_file_2 = 'params_F1/{}_alpha{}_shots{}.txt'.format(self.args.method, self.args.alpha_dirichlet, self.args.shots[0])
-        #name_file = 'params_tuning/params_tuning_{}.txt'.format(self.args.method)
-        if os.path.isfile(name_file_1) == True:
-            f = open(name_file_1, 'a')
-            #g = open(name_file_2, 'a')
-            print('ok')
-        else:
-            f = open(name_file_1, 'w')
-            #g = open(name_file_2, 'w')
-            
-        f.write(str(self.args.n_ways)+'\t')
         self.logger.info('----- Final test results -----')
         for shot in self.args.shots:
+            name_file_1 = 'params_acc/{}_alpha{}_shots{}.txt'.format(self.args.method, self.args.alpha_dirichlet, shot)
+
+            if os.path.isfile(name_file_1) == True:
+                f = open(name_file_1, 'a')
+                print('ok')
+            else:
+                f = open(name_file_1, 'w')
+                
+            f.write(str(self.args.n_ways)+'\t')
             self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
                                                                                    mean_accuracies[self.args.shots.index(shot)]))
             self.logger.info('{}-shot mean F1 score over {} tasks: {}'.format(shot, self.args.number_tasks,
                                                                                    mean_F1s[self.args.shots.index(shot)]))
             f.write(str(round(100*mean_accuracies[self.args.shots.index(shot)], 1)) +'\t' )
             f.write(str(round(100*mean_F1s[self.args.shots.index(shot)], 1)) +'\t' )
-        f.write('\n')
-        f.close()
-        #g.write('\n')
-        #g.close()
+            f.write('\n')
+            f.close()
+ 
         return mean_accuracies
 
     def get_method_builder(self, model):
