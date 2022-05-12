@@ -1,0 +1,53 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-UNBIASED
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/test/output_mean.plk
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 73
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 10000 tasks: 0.6292626857757568
+[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 10000 tasks: 0.7435026666666666
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10000 tasks: 0.8285533785820007
+[src.eval]: [INFO]: 5-shot mean hungarian accuracy over 10000 tasks: 0.8385133333333334
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10000 tasks: 0.8692600131034851
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 10000 tasks: 0.8721413333333334
+[src.eval]: [INFO]: 20-shot mean test accuracy over 10000 tasks: 0.891690731048584
+[src.eval]: [INFO]: 20-shot mean hungarian accuracy over 10000 tasks: 0.892596

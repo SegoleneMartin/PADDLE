@@ -1,0 +1,17 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-UNBIASED
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 80
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 4000 tasks: 0.64041668176651
+[src.eval]: [INFO]: 5-shot mean test accuracy over 4000 tasks: 0.8188400864601135
+[src.eval]: [INFO]: 10-shot mean test accuracy over 4000 tasks: 0.8464100360870361
+[src.eval]: [INFO]: 20-shot mean test accuracy over 4000 tasks: 0.8645666837692261

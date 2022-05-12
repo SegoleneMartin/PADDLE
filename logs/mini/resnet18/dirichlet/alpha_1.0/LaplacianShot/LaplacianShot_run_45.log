@@ -1,0 +1,7 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: LaplacianShot
+[src.methods.laplacianshot]: [INFO]:  ==> Executing 5-shot predictions with lmd = 0.7 ...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 1 tasks: 1.0
+[src.eval]: [INFO]: 5-shot mean F1 score over 1 tasks: 1.0

@@ -1,0 +1,11 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: ALPHA-TIM
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
+[src.methods.tim]: [INFO]:  ==> Executing ALPHA-TIM adaptation over 1000 iterations on 10 shot tasks ...
+[src.methods.tim]: [INFO]:  ==> Executing ALPHA-TIM adaptation over 1000 iterations on 20 shot tasks ...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 10-shot mean test accuracy over 1000 tasks: 0.8782534003257751
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 1000 tasks: 0.8817866666666666
+[src.eval]: [INFO]: 20-shot mean test accuracy over 1000 tasks: 0.8879600763320923
+[src.eval]: [INFO]: 20-shot mean hungarian accuracy over 1000 tasks: 0.8898

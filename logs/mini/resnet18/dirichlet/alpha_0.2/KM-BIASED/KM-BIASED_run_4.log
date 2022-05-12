@@ -1,0 +1,11 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-BIASED
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/test/output_mean.plk
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 10000 tasks: 0.462578684091568
+[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 10000 tasks: 0.5931106666666667
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10000 tasks: 0.49996399879455566
+[src.eval]: [INFO]: 5-shot mean hungarian accuracy over 10000 tasks: 0.5946746666666667
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10000 tasks: 0.5101373195648193
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 10000 tasks: 0.6007053333333332

@@ -130,11 +130,12 @@ class PT_MAP(object):
         n_tasks, q_shot = preds_q.size()
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
         self.timestamps.append(new_time)
+        union = list(range(self.num_classes))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).numpy())
             preds = list(preds_q[i].reshape(q_shot).numpy())
-            union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=list(union))
+            #union = set.union(set(ground_truth),set(preds))
+            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
 
 

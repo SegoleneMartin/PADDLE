@@ -26,6 +26,7 @@ class LaplacianShot(object):
         self.norm_type = args.norm_type
         self.iter = args.iter
         self.n_ways = args.n_ways
+        self.num_classes = 20
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
@@ -258,14 +259,14 @@ class LaplacianShot(object):
         support = support.numpy()
         query = query.numpy()
         # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        y_s = y_s.numpy().squeeze(2)[:, :self.n_ways][0]
+        y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
         y_q = y_q.numpy().squeeze(2)
 
         if self.proto_rect:
             self.logger.info(" ==> Executing proto-rectification ...")
             support = self.proto_rectification(support=support, query=query, shot=shot)
         else:
-            support = support.reshape(self.number_tasks, shot, self.n_ways, support.shape[-1]).mean(1)
+            support = support.reshape(self.number_tasks, shot, self.num_classes, support.shape[-1]).mean(1)
 
         # Run adaptation
         self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
@@ -306,6 +307,7 @@ class LaplacianShot(object):
 
             ground_truth = list(y_q[i].reshape(q_shot))
             preds = list(preds.reshape(q_shot))
-            union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=list(union))
+            union = list(range(self.num_classes))
+            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.record_info(acc_list=acc_list, F1_list=f1, ent_energy=ent_energy, new_time=times)
+            union = list(range(self.num_classes))

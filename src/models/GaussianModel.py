@@ -40,7 +40,6 @@ class GaussianModel(object):
         while torch.max(torch.abs(u - P.sum(2))) > epsilon:
             u = P.sum(2)
             P *= (r / u).view((n_runs, -1, 1))
-            print('P', P.size())
             P *= (c / P.sum(1)).view((n_runs, 1, -1))
             if iters == maxiters:
                 break
@@ -53,7 +52,7 @@ class GaussianModel(object):
 
         p_xj = torch.zeros_like(dist)
         r = torch.ones(n_tasks, n_sum_query)
-        c = torch.ones(n_tasks, self.n_ways) * n_queries
+        c = torch.ones(n_tasks, self.num_classes) * n_queries
 
         #n_lsamples = self.n_ways * shot
         n_lsamples = self.num_classes * shot

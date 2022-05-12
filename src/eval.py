@@ -95,6 +95,8 @@ class Evaluator:
             param = self.args.alpha_values[1]
         elif self.args.method == 'KM-UNBIASED':
             param = self.args.alpha
+        elif self.args.method == 'KM-BIASED':
+            param = self.args.alpha
         elif self.args.method == 'LaplacianShot':
             param = self.args.lmd[0]
         elif self.args.method == 'Baseline':

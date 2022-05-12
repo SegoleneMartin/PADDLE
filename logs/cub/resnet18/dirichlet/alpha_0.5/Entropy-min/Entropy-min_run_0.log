@@ -1,0 +1,4 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11220132
+[src.eval]: [INFO]: => Runnning full evaluation with method: Entropy-min
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/cub/softmax/resnet18/best/test/output_mean.plk

@@ -1,0 +1,5 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: ALPHA-TIM
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/test/output_mean.plk
+[src.methods.tim]: [INFO]:  ==> Executing ALPHA-TIM adaptation over 1000 iterations on 10 shot tasks with alpha = [5.0, 5.0, 7.0]...

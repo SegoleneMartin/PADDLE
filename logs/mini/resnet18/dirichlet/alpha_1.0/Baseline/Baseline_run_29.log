@@ -1,0 +1,7 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: Baseline
+[src.methods.baseline]: [INFO]:  ==> Executing Baseline adaptation over 100 iterations on 5 shot tasks...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 2 tasks: 0.5266666412353516
+[src.eval]: [INFO]: 5-shot mean F1 score over 2 tasks: 0.6244989868519281

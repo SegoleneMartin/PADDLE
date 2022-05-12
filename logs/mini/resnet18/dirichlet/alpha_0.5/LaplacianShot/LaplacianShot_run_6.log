@@ -1,0 +1,17 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: LaplacianShot
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
+[src.methods.laplacianshot]: [INFO]:  ==> Executing 1-shot predictions with lmd = 0.7 ...
+[src.methods.laplacianshot]: [INFO]:  ==> Executing 5-shot predictions with lmd = 0.6 ...
+[src.methods.laplacianshot]: [INFO]:  ==> Executing 10-shot predictions with lmd = 0.6 ...
+[src.methods.laplacianshot]: [INFO]:  ==> Executing 20-shot predictions with lmd = 0.6 ...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 1000 tasks: 0.6815066933631897
+[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 1000 tasks: 0.7216667532920837
+[src.eval]: [INFO]: 5-shot mean test accuracy over 1000 tasks: 0.8333067893981934
+[src.eval]: [INFO]: 5-shot mean hungarian accuracy over 1000 tasks: 0.8383200764656067
+[src.eval]: [INFO]: 10-shot mean test accuracy over 1000 tasks: 0.8634267449378967
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 1000 tasks: 0.8663867115974426
+[src.eval]: [INFO]: 20-shot mean test accuracy over 1000 tasks: 0.8769333362579346
+[src.eval]: [INFO]: 20-shot mean hungarian accuracy over 1000 tasks: 0.8792133927345276

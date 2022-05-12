@@ -24,6 +24,7 @@ class ICI(object):
         self.reduce = args.reduce
         self.d = args.d
         self.C = args.C
+        self.num_classes = 20
         self.initial_embed(args.reduce, args.d)
         self.initial_classifier(args.classifier)
         self.init_info_lists()
@@ -51,11 +52,12 @@ class ICI(object):
         self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
+        union = list(range(self.num_classes))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).numpy())
             preds = list(preds_q[i].reshape(q_shot).numpy())
-            union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=list(union))
+            #union = set.union(set(ground_truth),set(preds))
+            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
 
     def get_logs(self):

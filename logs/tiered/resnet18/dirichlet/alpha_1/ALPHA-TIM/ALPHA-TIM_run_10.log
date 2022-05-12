@@ -1,0 +1,7 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11348895
+[src.eval]: [INFO]: => Runnning full evaluation with method: ALPHA-TIM
+[src.methods.tim]: [INFO]:  ==> Executing ALPHA-TIM adaptation over 1000 iterations on 5 shot tasks with alpha = [10.0, 10.0, 10.0]...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 1000 tasks: 0.856306791305542
+[src.eval]: [INFO]: 5-shot mean F1 score over 1000 tasks: 0.7571100775193799

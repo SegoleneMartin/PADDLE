@@ -1,0 +1,17 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: Baseline
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/test/output_mean.plk
+[src.methods.baseline]: [INFO]:  ==> Executing Baseline adaptation over 100 iterations on 1 shot tasks...
+[src.methods.baseline]: [INFO]:  ==> Executing Baseline adaptation over 100 iterations on 5 shot tasks...
+[src.methods.baseline]: [INFO]:  ==> Executing Baseline adaptation over 100 iterations on 10 shot tasks...
+[src.methods.baseline]: [INFO]:  ==> Executing Baseline adaptation over 100 iterations on 20 shot tasks...
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 1000 tasks: 0.5661066770553589
+[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 1000 tasks: 0.6736933333333331
+[src.eval]: [INFO]: 5-shot mean test accuracy over 1000 tasks: 0.7883467674255371
+[src.eval]: [INFO]: 5-shot mean hungarian accuracy over 1000 tasks: 0.7922780000000001
+[src.eval]: [INFO]: 10-shot mean test accuracy over 1000 tasks: 0.8321734070777893
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 1000 tasks: 0.8335589333333331
+[src.eval]: [INFO]: 20-shot mean test accuracy over 1000 tasks: 0.8599467277526855
+[src.eval]: [INFO]: 20-shot mean hungarian accuracy over 1000 tasks: 0.8607857333333333

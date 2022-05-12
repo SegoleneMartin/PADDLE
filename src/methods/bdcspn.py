@@ -20,6 +20,7 @@ class BDCSPN(object):
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
+        self.num_classes = 20
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
 
@@ -43,11 +44,12 @@ class BDCSPN(object):
         y_q = torch.from_numpy(y_q)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
+        union = list(range(self.num_classes))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).numpy())
             preds = list(preds_q[i].reshape(q_shot).numpy())
-            union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=list(union))
+            #union = set.union(set(ground_truth),set(preds))
+            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
         pass
 

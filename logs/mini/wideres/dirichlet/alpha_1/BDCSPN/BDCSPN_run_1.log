@@ -1,0 +1,4 @@
+[__main__]: [INFO]: => Creating model 'wideres'
+[__main__]: [INFO]: Number of model parameters: 36523904
+[src.eval]: [INFO]: => Runnning full evaluation with method: BDCSPN
+[src.eval]: [INFO]:  ==> Beginning feature extraction to compute training mean

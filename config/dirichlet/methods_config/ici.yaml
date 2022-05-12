@@ -1,0 +1,8 @@
+METHOD:
+  method: 'ICI'
+  step: 5
+  max_iter : 100
+  reduce : "pca"  # in ["isomap", "ltsa", "mds", "lle", "se", "pca", "none"]
+  d : 5
+  C : 10
+  classifier : lr # in ["lr", "svm"]

@@ -1,0 +1,20 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-UNBIASED
+[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 70
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 1-shot mean test accuracy over 3000 tasks: 0.6499956250190735
+[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 3000 tasks: 0.7421022222222221
+[src.eval]: [INFO]: 5-shot mean test accuracy over 3000 tasks: 0.8181600570678711
+[src.eval]: [INFO]: 5-shot mean hungarian accuracy over 3000 tasks: 0.8253822222222222
+[src.eval]: [INFO]: 10-shot mean test accuracy over 3000 tasks: 0.849755585193634
+[src.eval]: [INFO]: 10-shot mean hungarian accuracy over 3000 tasks: 0.8523377777777777
