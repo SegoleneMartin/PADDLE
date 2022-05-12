@@ -16,7 +16,7 @@ class Baseline(object):
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
 

@@ -13,14 +13,13 @@ class BDCSPN(object):
     def __init__(self, model, device, log_file, args):
         self.device = device
         self.norm_type = args.norm_type
-        #self.n_ways = args.n_ways
-        self.n_ways = 20
+        self.n_ways = args.n_ways
         self.temp = args.temp
         self.num_NN = args.num_NN
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
 
@@ -93,7 +92,7 @@ class BDCSPN(object):
         eta = support.mean(1) - query.mean(1)  # Shifting term
         query = query + eta[:, np.newaxis, :]  # Adding shifting term to each normalized query feature
         query_aug = np.concatenate((support, query), axis=1)  # Augmented set S' (X')
-        support_ = support.reshape(support.shape[0], shot, self.n_ways, support.shape[-1]).mean(1)  # Init basic prototypes Pn
+        support_ = support.reshape(support.shape[0], shot, self.num_classes, support.shape[-1]).mean(1)  # Init basic prototypes Pn
         support_ = torch.from_numpy(support_)
         query_aug = torch.from_numpy(query_aug)
 
@@ -125,7 +124,7 @@ class BDCSPN(object):
         support = support.numpy()
         query = query.numpy()
         # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        y_s = y_s.numpy().squeeze(2)[:, :self.n_ways][0]
+        y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
         y_q = y_q.numpy().squeeze(2)
 
         self.logger.info(" ==> Executing proto-rectification ...")

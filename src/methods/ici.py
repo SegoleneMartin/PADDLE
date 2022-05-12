@@ -24,7 +24,7 @@ class ICI(object):
         self.reduce = args.reduce
         self.d = args.d
         self.C = args.C
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
         self.initial_embed(args.reduce, args.d)
         self.initial_classifier(args.classifier)
         self.init_info_lists()

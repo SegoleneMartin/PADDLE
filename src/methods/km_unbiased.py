@@ -20,7 +20,7 @@ class KM(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
-        self.num_classes = 20
+        self.num_classes = args.num_classes_test
 
     def init_info_lists(self):
         self.timestamps = []

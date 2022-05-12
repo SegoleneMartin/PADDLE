@@ -21,6 +21,7 @@ class TIM(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
+        self.num_classes = args.num_classes_test
 
     def __del__(self):
         self.logger.del_logger()
@@ -105,7 +106,7 @@ class TIM(object):
             self.loss_weights[0] : Scalar
         """
         self.N_s, self.N_q = support.size(1), query.size(1)
-        self.num_classes = torch.unique(y_s).size(0)
+        #self.num_classes = torch.unique(y_s).size(0)
         if self.loss_weights[0] == 'auto':
             self.loss_weights[0] = (1 + self.loss_weights[2]) * self.N_s / self.N_q
 
