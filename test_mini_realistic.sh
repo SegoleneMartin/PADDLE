@@ -1,6 +1,6 @@
 for n in 2 3 4 5 6 7 8 9 10
 do
-for alpha in 1.0
+for alpha in 1
 do
 for value in [9.0,9.0,9.0]
 do

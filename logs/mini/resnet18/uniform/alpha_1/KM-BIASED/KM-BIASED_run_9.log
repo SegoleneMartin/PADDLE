@@ -1,0 +1,10 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-BIASED
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10 tasks: 0.5133333206176758
+[src.eval]: [INFO]: 5-shot mean F1 score over 10 tasks: 0.5962889398183516
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10 tasks: 0.5879999995231628
+[src.eval]: [INFO]: 10-shot mean F1 score over 10 tasks: 0.641960927960928
+[src.eval]: [INFO]: 20-shot mean test accuracy over 10 tasks: 0.641333281993866
+[src.eval]: [INFO]: 20-shot mean F1 score over 10 tasks: 0.7049229483966326

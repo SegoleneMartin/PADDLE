@@ -1,0 +1,13 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-UNBIASED
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 75
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 75
+[src.methods.km_unbiased]: [INFO]:  ==> Executing KM-UNBIASED with LAMBDA = 75
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10 tasks: 0.6026666760444641
+[src.eval]: [INFO]: 5-shot mean F1 score over 10 tasks: 0.6636685284214696
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10 tasks: 0.6733332872390747
+[src.eval]: [INFO]: 10-shot mean F1 score over 10 tasks: 0.6968448540706604
+[src.eval]: [INFO]: 20-shot mean test accuracy over 10 tasks: 0.7280000448226929
+[src.eval]: [INFO]: 20-shot mean F1 score over 10 tasks: 0.5732041642567958
