@@ -17,5 +17,5 @@ def get_dataset(split, args, aug=False, out_name=False):
                                  jitter=args.jitter)
     else:
         transform = without_augment(84, enlarge=args.enlarge)
-    sets = DatasetFolder(args.dataset_path, args.split_dir, split, transform, out_name=out_name)
+    sets = DatasetFolder(args.root + '/' + args.dataset_path, args.split_dir, split, transform, out_name=out_name)
     return sets

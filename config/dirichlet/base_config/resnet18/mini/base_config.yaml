@@ -26,7 +26,8 @@ OPTIM:
 
 DATA:
     dataset: 'mini'
-    dataset_path: 'data/mini_imagenet'
+    root: 'data'
+    dataset_path: 'mini_imagenet'
     batch_size_loader: 256
     enlarge: True
     num_workers: 0

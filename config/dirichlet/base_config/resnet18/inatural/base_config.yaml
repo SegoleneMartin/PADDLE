@@ -26,7 +26,8 @@ OPTIM:
 
 DATA:
     dataset: 'inatural'
-    dataset_path: 'data/inatural/setup'
+    root: 'data'
+    dataset_path: 'inatural/setup'
     batch_size_loader: 256
     enlarge: True
     num_workers: 0
