@@ -26,7 +26,7 @@ OPTIM:
 
 DATA:
     dataset: 'tiered'
-    dataset_path: 'data/tiered_imagenet/data'
+    dataset_path: 'tiered_imagenet/data'
     batch_size_loader: 256
     enlarge: True
     num_workers: 4
