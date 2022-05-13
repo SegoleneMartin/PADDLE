@@ -258,7 +258,7 @@ class LaplacianShot(object):
         support = support.numpy()
         query = query.numpy()
         # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
+        #y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
         y_q = y_q.numpy().squeeze(2)
 
         if self.proto_rect:
@@ -300,7 +300,8 @@ class LaplacianShot(object):
             distance = LA.norm(substract, 2, axis=-1)
             unary = distance.transpose() ** 2
             W = self.create_affinity(query[i])
-            preds, acc_list, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s, y_q=y_q, task_i=i,
+            y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
+            preds, acc_list, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s_i, y_q=y_q, task_i=i,
                                                 bound_iteration=self.iter)
             q_shot = preds.size(1)
 

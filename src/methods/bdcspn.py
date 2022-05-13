@@ -40,8 +40,15 @@ class BDCSPN(object):
         """
         n_tasks, q_shot = preds_q.shape
         preds_q = torch.from_numpy(preds_q)
+        #print('y_q', y_q)
+        #print('preds', preds_q)
         y_q = torch.from_numpy(y_q)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
+        print("acc", accuracy)
+        for i in range(n_tasks):
+            print("preds_q[i]", preds_q[i])
+            print("y_q[i]", y_q[i])
+            print('acc test', (preds_q[i] == y_q[i]).float().mean())
         self.test_acc.append(accuracy)
         union = list(range(self.num_classes))
         for i in range(n_tasks):
@@ -115,7 +122,7 @@ class BDCSPN(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
         train_mean = task_dic['train_mean']
-
+        print('y_s', y_s)
         # Extract features
         z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
 
@@ -124,8 +131,9 @@ class BDCSPN(object):
         support = support.numpy()
         query = query.numpy()
         # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
-        y_q = y_q.numpy().squeeze(2)
+        # y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
+        print("y_s", y_s)
+        y_q = y_q.long().squeeze(2).numpy()
 
         self.logger.info(" ==> Executing proto-rectification ...")
         support = self.proto_rectification(support=support, query=query, shot=shot)
@@ -154,10 +162,11 @@ class BDCSPN(object):
         self.logger.info(" ==> Executing predictions on {} shot tasks ...".format(shot))
         out_list = []
         for i in tqdm(range(self.number_tasks)):
+            y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
             substract = support[i][:, None, :] - query[i]
             distance = LA.norm(substract, 2, axis=-1)
             idx = np.argpartition(distance, self.num_NN, axis=0)[:self.num_NN]
-            nearest_samples = np.take(y_s, idx)
+            nearest_samples = np.take(y_s_i, idx)
             out = mode(nearest_samples, axis=0)[0]
             out_list.append(out)
         n_tasks, q_shot, feature_dim = query.shape

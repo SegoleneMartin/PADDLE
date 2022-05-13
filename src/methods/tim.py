@@ -124,6 +124,9 @@ class TIM(object):
         q_probs = logits_q.softmax(2)
         n_tasks, q_shot = preds_q.size()
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
+        print('y_q', y_q)
+        print("preds", preds_q)
+        print('accurancy', accuracy)
         self.test_acc.append(accuracy)
         union = list(range(self.num_classes))
         for i in range(n_tasks):
@@ -182,7 +185,6 @@ class TIM(object):
         support = support.to(self.device)
         query = query.to(self.device)
         
-
         # Initialize weights
         self.compute_lambda(support=support, query=query, y_s=y_s)
         # Init basic prototypes
@@ -232,7 +234,7 @@ class TIM_GD(TIM):
             loss = self.loss_weights[0] * ce - (self.loss_weights[1] * q_ent - self.loss_weights[2] * q_cond_ent)
 
             optimizer.zero_grad()
-            loss.backward()
+            loss.backward()           
             optimizer.step()
 
             t1 = time.time()

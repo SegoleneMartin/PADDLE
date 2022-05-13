@@ -40,16 +40,16 @@ DATA:
 
 EVAL:
     evaluate: True      # Set to True to evaluate methods
-    number_tasks: 10 # Number of tasks to evaluate
-    batch_size: 10
+    number_tasks: 5 # Number of tasks to evaluate
+    batch_size: 5
     n_ways: 5
-    num_classes_test : 20
+    num_classes_test : 5
     n_query: 75 # Balanced case: 15 query data per class
-    balanced: 'uniform' # ('balanced' | 'dirichlet' | 'uniform')
+    balanced: 'dirichlet' # ('balanced' | 'dirichlet' | 'uniform')
     alpha_dirichlet: 1
     model_tag: 'best'
     plt_metrics: ['accs']
-    shots: [5,10,20]
+    shots: [10]
     used_set_support: 'test'
     used_set_query: 'test'
     fresh_start: False

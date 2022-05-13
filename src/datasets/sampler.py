@@ -123,7 +123,8 @@ class SamplerQuery:
                 sum_pos = 0
                 while sum_pos < self.n_query :
                     query = []
-                    query_samples = get_dirichlet_query_dist(alpha, 1, self.n_cls, self.n_query)[0]
+                    #query_samples = get_dirichlet_query_dist(alpha, 1, self.n_cls, self.n_query)[0]
+                    query_samples = np.repeat(self.n_query // self.n_cls, self.n_cls)
                     sum_pos = 0
                     for c, nb_shot in zip(classes, query_samples):
                         l = self.m_ind_query[c]  # all data indexs of this class
@@ -131,6 +132,7 @@ class SamplerQuery:
                         sum_pos += min(len(pos),nb_shot)
                         #assert len(pos) == nb_shot
                         query.append(l[pos])
+            
                 query = torch.cat(query)
 
                 
