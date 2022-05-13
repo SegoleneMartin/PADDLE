@@ -161,7 +161,7 @@ class Evaluator:
             
         self.logger.info('----- Final test results -----')
         for shot in self.args.shots:
-            name_file_1 = 'params_acc/{}_alpha{}_shots{}.txt'.format(self.args.method, self.args.alpha_dirichlet, shot)
+            name_file_1 = 'params_val/{}/{}/{}_alpha{}_shots{}.txt'.format(self.args.dataset, self.args.arch, self.args.method, self.args.alpha_dirichlet, shot)
 
             if os.path.isfile(name_file_1) == True:
                 f = open(name_file_1, 'a')

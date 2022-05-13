@@ -34,7 +34,6 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     args = parse_args()
-    print('ALPHA DIRICHLET : {}'.format(args.alpha_dirichlet))
     device = torch.device("cuda" if args.cuda else "cpu")
     device = torch.device("cpu")
     #callback = None if args.visdom_port is None else VisdomLogger(port=args.visdom_port)
