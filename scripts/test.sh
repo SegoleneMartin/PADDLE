@@ -2,8 +2,8 @@
 #SBATCH --mem=0 # Require full memory
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=6
-#SBATCH --array=0-?
-#SBATCH --time=08:00:00
+#SBATCH --array=0-14
+#SBATCH --time=01:00:00
 #SBATCH --account=rrg-ebrahimi
 
 #SBATCH --mail-user=malik.boudiaf.1@etsmtl.net
@@ -38,5 +38,5 @@ tar xf ~/scratch/sego/data/${dataset}.tar.gz -C ${DATASET_DIR}
 
 for method in ${METHODS}; do \
     python3 -m main --base_config config/dirichlet/base_config/${architecture}/${dataset}/base_config.yaml \
-                    --method_config config/dirichlet/methods_config/${method}.yaml ;\
+                    --method_config config/dirichlet/methods_config/${method}.yaml 
 done

@@ -1,0 +1,10 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: ICI
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10 tasks: 0.46933332085609436
+[src.eval]: [INFO]: 5-shot mean F1 score over 10 tasks: 0.8188854489164086
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10 tasks: 0.6000000238418579
+[src.eval]: [INFO]: 10-shot mean F1 score over 10 tasks: 0.7555263157894738
+[src.eval]: [INFO]: 20-shot mean test accuracy over 10 tasks: 0.669333279132843
+[src.eval]: [INFO]: 20-shot mean F1 score over 10 tasks: 0.8065165696939034

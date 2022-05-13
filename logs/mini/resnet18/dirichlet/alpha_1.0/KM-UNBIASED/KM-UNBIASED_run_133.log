@@ -1,0 +1,3 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: KM-UNBIASED
