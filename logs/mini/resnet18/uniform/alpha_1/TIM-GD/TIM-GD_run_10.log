@@ -1,0 +1,10 @@
+[__main__]: [INFO]: => Creating model 'resnet18'
+[__main__]: [INFO]: Number of model parameters: 11201664
+[src.eval]: [INFO]: => Runnning full evaluation with method: TIM-GD
+[src.eval]: [INFO]: ----- Final test results -----
+[src.eval]: [INFO]: 5-shot mean test accuracy over 10 tasks: 0.581333339214325
+[src.eval]: [INFO]: 5-shot mean F1 score over 10 tasks: 0.5443174603174604
+[src.eval]: [INFO]: 10-shot mean test accuracy over 10 tasks: 0.6480000019073486
+[src.eval]: [INFO]: 10-shot mean F1 score over 10 tasks: 0.6972057572057572
+[src.eval]: [INFO]: 20-shot mean test accuracy over 10 tasks: 0.6706665754318237
+[src.eval]: [INFO]: 20-shot mean F1 score over 10 tasks: 0.6869163879598663
