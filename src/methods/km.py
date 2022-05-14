@@ -140,16 +140,13 @@ class KM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        support, query = extract_features(self.model, support, query)
+        #support, query = extract_features(self.model, support, query)
         support = support.to(self.device)
         query = query.to(self.device)
         
         # Perform normalizations required
         scaler = MinMaxScaler(feature_range=(0, 1))
         query, support = scaler(query, support)
-
-        print("support", support.size())
-        print("query", query.size())
 
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)

@@ -5,7 +5,7 @@ import time
 from numpy import linalg as LA
 import numpy as np
 from scipy.stats import mode
-from ..utils import get_metric, Logger, extract_features
+from ..utils import get_metric, Logger, extract_features, get_one_hot
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.optimize import linear_sum_assignment
 
@@ -22,6 +22,8 @@ class BDCSPN(object):
         self.num_classes = args.num_classes_test
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
+        self.dataset = args.dataset
+        self.used_set_support = args.used_set_support
 
     def __del__(self):
         self.logger.del_logger()
@@ -79,7 +81,7 @@ class BDCSPN(object):
             z_q = z_q / LA.norm(z_q, 2, 2)[:, :, None]
         return z_s, z_q
 
-    def proto_rectification(self, support, query, shot):
+    def proto_rectification(self, y_s, support, query, shot):
         """
             inputs:
                 support : np.Array of shape [n_task, s_shot, feature_dim]
@@ -91,10 +93,17 @@ class BDCSPN(object):
         """
         eta = support.mean(1) - query.mean(1)  # Shifting term
         query = query + eta[:, np.newaxis, :]  # Adding shifting term to each normalized query feature
-        query_aug = np.concatenate((support, query), axis=1)  # Augmented set S' (X')
-        support_ = support.reshape(support.shape[0], shot, self.num_classes, support.shape[-1]).mean(1)  # Init basic prototypes Pn
-        support_ = torch.from_numpy(support_)
-        query_aug = torch.from_numpy(query_aug)
+        if self.dataset == 'inatural' and self.used_set_support == 'repr':
+            query_aug = torch.cat((support, query), axis=1)  # Augmented set S' (X')
+            one_hot = get_one_hot(y_s)
+            counts = one_hot.sum(1).view(support.size()[0], -1, 1)
+            weights = one_hot.transpose(1, 2).matmul(support)
+            support_ = weights / counts
+        else:
+            query_aug = np.concatenate((support, query), axis=1)  # Augmented set S' (X')
+            support_ = support.reshape(support.shape[0], shot, self.num_classes, support.shape[-1]).mean(1)  # Init basic prototypes Pn
+            support_ = torch.from_numpy(support_)
+            query_aug = torch.from_numpy(query_aug)
 
         proto_weights = []
         for j in tqdm(range(self.number_tasks)):
@@ -103,8 +112,7 @@ class BDCSPN(object):
             cos_sim = F.cosine_similarity(query_aug[j][:, None, :], support_[j][None, :, :], dim=2)  # Cosine similarity between X' and Pn
             cos_sim = self.temp * cos_sim
             W = F.softmax(cos_sim, dim=1)
-            support_list = [(W[predict == i, i].unsqueeze(1) * query_aug[j][predict == i]).mean(0, keepdim=True) for i
-                                in predict.unique()]
+            support_list = [(W[predict == i, i].unsqueeze(1) * query_aug[j][predict == i]).mean(0, keepdim=True) for i in predict.unique()]
             proto = torch.cat(support_list, dim=0)  # Rectified prototypes P'n
             proto_weights.append(proto)
         proto_weights = np.stack(proto_weights, axis=0)
@@ -115,19 +123,35 @@ class BDCSPN(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
         train_mean = task_dic['train_mean']
-        # Extract features
-        z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+        
+        if self.dataset == 'inatural' and self.used_set_support == 'repr':
+            print('OUI')
+            # Extract features
+            support, query = extract_features(self.model, x_s, x_q)
+            support = torch.load('features_support.pt').to('cpu')
+            support = support.unsqueeze(0)
+            y_s = torch.load('labels_support.pt').to('cpu')
+            y_s = y_s.unsqueeze(0)
+            y_q = y_q.long().squeeze(2).to('cpu')
+            query = query.to('cpu')
+            self.logger.info(" ==> Executing proto-rectification ...")
+            support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
+            query = query.numpy()
+            y_q = y_q.numpy()
+        
+        else:
+            # Extract features
+            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
 
-        # Perform normalizations required
-        support, query = self.normalization(z_s=z_s, z_q=z_q, train_mean=train_mean)
-        support = support.numpy()
-        query = query.numpy()
-        # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        # y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
-        y_q = y_q.long().squeeze(2).numpy()
+            # Perform normalizations required
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
+            support = support.numpy()
+            query = query.numpy()
+            # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
+            # y_s = y_s.squeeze(2)[:, :self.num_classes][0]
+            y_q = y_q.long().squeeze(2).numpy()
+            support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
 
-        self.logger.info(" ==> Executing proto-rectification ...")
-        support = self.proto_rectification(support=support, query=query, shot=shot)
         # support = torch.from_numpy(support)
         # query = torch.from_numpy(query)
         # y_s = torch.from_numpy(y_s)
@@ -153,7 +177,10 @@ class BDCSPN(object):
         self.logger.info(" ==> Executing predictions on {} shot tasks ...".format(shot))
         out_list = []
         for i in tqdm(range(self.number_tasks)):
-            y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
+            if self.dataset == 'inatural' and self.used_set_support == 'repr':
+                y_s_i = np.unique(y_s[i])
+            else:
+                y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
             substract = support[i][:, None, :] - query[i]
             distance = LA.norm(substract, 2, axis=-1)
             idx = np.argpartition(distance, self.num_NN, axis=0)[:self.num_NN]
