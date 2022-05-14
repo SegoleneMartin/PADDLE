@@ -109,6 +109,7 @@ class Tasks_Generator:
                                                                                                         n_samples, -1)
         merged_tasks['train_mean'] = self.train_mean
         '''
+        feature_size = data_support.size()[-1]
         # Now merging all tasks into 1 single dictionnary
         merged_tasks = {}
         n_tasks = len(tasks_dics)
@@ -116,7 +117,7 @@ class Tasks_Generator:
             n_samples = tasks_dics[0][key].size(0)
             if key == 'x_s' or key == 'x_q':
                 merged_tasks[key] = torch.cat([tasks_dics[i][key] for i in range(n_tasks)], dim=0).view(n_tasks,
-                                                                                                        n_samples, 512)
+                                                                                                        n_samples, feature_size)
             else:
                 merged_tasks[key] = torch.cat([tasks_dics[i][key] for i in range(n_tasks)], dim=0).view(n_tasks,
                                                                                                         n_samples, -1)

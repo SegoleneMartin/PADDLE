@@ -96,9 +96,7 @@ class Evaluator:
             for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic['support'], False)):
                 inputs = inputs.to(self.device).unsqueeze(0)
                 labels = torch.Tensor([labels])
-                print("step 1")
                 outputs, _ = model(inputs, True)
-                print("step 2")
                 all_features.append(outputs.cpu())
                 all_labels.append(labels)
             all_features = torch.cat(all_features, 0)
@@ -137,13 +135,16 @@ class Evaluator:
         dataset.update({'query': query_set})
 
         ## Compute train mean
-        # train_set = get_dataset('train', args=self.args, **loader_info)
-        # dataset['train_loader'] = train_set
-        # train_loader = get_dataloader(sets=train_set, args=self.args)
-        # train_mean, _ = extract_mean_features(model=model,  train_loader=train_loader, args=self.args,
-        #                                      logger=self.logger, device=self.device)
-        # torch.save(train_mean, 'train_mean_inatural')
-        train_mean = torch.load('train_mean_' + self.args.dataset + '.pt')
+        name_file = 'train_mean_' + self.args.dataset + '_' + self.args.arch + '.pt'
+        if os.path.isfile(name_file) == False:
+            train_set = get_dataset('train', args=self.args, **loader_info)
+            dataset['train_loader'] = train_set
+            train_loader = get_dataloader(sets=train_set, args=self.args)
+            train_mean, _ = extract_mean_features(model=model,  train_loader=train_loader, args=self.args,
+                                                logger=self.logger, device=self.device)
+            torch.save(train_mean, name_file)
+        else:
+            train_mean = torch.load(name_file)
 
         # Extract features (just load them if already in memory)
         extracted_features_dic_support = self.extract_features(model=model,
