@@ -19,6 +19,8 @@ class Baseline(object):
         self.num_classes = args.num_classes_test
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
+        self.dataset = args.dataset
+        self.used_set_support = args.used_set_support
 
     def __del__(self):
         self.logger.del_logger()
@@ -69,9 +71,9 @@ class Baseline(object):
         self.model.eval()
         t0 = time.time()
         n_tasks = support.size(0)
-        one_hot = get_one_hot(y_s)
+        one_hot = get_one_hot(y_s).to(self.device)
         counts = one_hot.sum(1).view(n_tasks, -1, 1)
-        weights = one_hot.transpose(1, 2).matmul(support)
+        weights = one_hot.transpose(1, 2).matmul(support.to(self.device))
         self.weights = weights / counts
         """
         self.record_info(new_time=time.time()-t0,
@@ -176,15 +178,26 @@ class Baseline(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
 
-        # Extract features
-        z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+        if self.dataset == 'inatural' and self.used_set_support == 'repr':
+            # Extract features
+            support, query = extract_features(self.model, x_s, x_q)
+            support = torch.load('features_support.pt').to(self.device)
+            support = support.unsqueeze(0)
+            y_s = torch.load('labels_support.pt').to(self.device)
+            y_s = y_s.unsqueeze(0)
+            y_q = y_q.long().squeeze(2).to(self.device)
+            query = query.to(self.device)
+            
+        else:
+            # Extract features
+            support, query = extract_features(model=self.model, support=x_s, query=x_q)
 
-        # Transfer tensors to GPU if needed
-        support = z_s.to(self.device)  # [ N * (K_s + K_q), d]
-        query = z_q.to(self.device)  # [ N * (K_s + K_q), d]
-        y_s = y_s.long().squeeze(2).to(self.device)
-        y_q = y_q.long().squeeze(2).to(self.device)
-
+            # Transfer tensors to GPU if needed
+            support = support.to(self.device)  # [ N * (K_s + K_q), d]
+            query = query.to(self.device)  # [ N * (K_s + K_q), d]
+            y_s = y_s.long().squeeze(2).to(self.device)
+            y_q = y_q.long().squeeze(2).to(self.device)
+        
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
         # Run adaptation

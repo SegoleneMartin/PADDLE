@@ -91,6 +91,8 @@ class KM(object):
         """
 
         preds_q = self.p.argmax(2)
+        print('y_q', y_q)
+        print('preds', preds_q)
         n_tasks, q_shot = preds_q.size()
         self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
@@ -147,9 +149,6 @@ class KM(object):
         # Perform normalizations required
         scaler = MinMaxScaler(feature_range=(0, 1))
         query, support = scaler(query, support)
-
-        print("support", support.size())
-        print("query", query.size())
 
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)

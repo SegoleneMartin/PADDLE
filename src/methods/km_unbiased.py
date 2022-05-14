@@ -138,7 +138,6 @@ class KM(object):
 
         # Extract features
         support, query = extract_features(self.model, support, query)
-
         support = support.to(self.device)
         query = query.to(self.device)
 

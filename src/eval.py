@@ -169,8 +169,8 @@ class Evaluator:
             else:
                 f = open(name_file_1, 'w')
                 
-            #f.write(str(self.args.n_ways)+'\t')
-            f.write(str(param)+'\t')
+            f.write(str(self.args.n_ways)+'\t')
+            #f.write(str(param)+'\t')
             self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
                                                                                    mean_accuracies[self.args.shots.index(shot)]))
             self.logger.info('{}-shot mean F1 score over {} tasks: {}'.format(shot, self.args.number_tasks,

@@ -22,6 +22,8 @@ class TIM(object):
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.num_classes = args.num_classes_test
+        self.dataset = args.dataset
+        self.used_set_support = args.used_set_support
 
     def __del__(self):
         self.logger.del_logger()
@@ -124,9 +126,6 @@ class TIM(object):
         q_probs = logits_q.softmax(2)
         n_tasks, q_shot = preds_q.size()
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
-        print('y_q', y_q)
-        print("preds", preds_q)
-        print('accurancy', accuracy)
         self.test_acc.append(accuracy)
         union = list(range(self.num_classes))
         for i in range(n_tasks):
@@ -170,21 +169,38 @@ class TIM(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
 
-        # Transfer tensors to GPU if needed
-        support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
-        query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
-        y_s = y_s.long().squeeze(2).to(self.device)
-        y_q = y_q.long().squeeze(2).to(self.device)
+        if self.dataset == 'inatural' and self.used_set_support == 'repr':
+            print('OUI')
+            # Extract features
+            support, query = extract_features(self.model, x_s, x_q)
+            support = torch.load('features_support.pt').to(self.device)
+            support = support.unsqueeze(0)
+            y_s = torch.load('labels_support.pt').to(self.device)
+            y_s = y_s.unsqueeze(0)
+            y_q = y_q.long().squeeze(2).to(self.device)
+            query = query.to(self.device)
+            
+             # Perform normalizations required
+            support = F.normalize(support, dim=2)
+            query = F.normalize(query, dim=2)
+            
+        else:
+            # Transfer tensors to GPU if needed
+            support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
+            query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
+            y_s = y_s.long().squeeze(2).to(self.device)
+            y_q = y_q.long().squeeze(2).to(self.device)
 
-        # Extract features
-        support, query = extract_features(self.model, support, query)
+            # Extract features
+            support, query = extract_features(self.model, support, query)
 
-        # Perform normalizations required
-        support = F.normalize(support, dim=2)
-        query = F.normalize(query, dim=2)
-        support = support.to(self.device)
-        query = query.to(self.device)
+            # Perform normalizations required
+            support = F.normalize(support, dim=2)
+            query = F.normalize(query, dim=2)
+            support = support.to(self.device)
+            query = query.to(self.device)
         
+
         # Initialize weights
         self.compute_lambda(support=support, query=query, y_s=y_s)
         # Init basic prototypes
@@ -227,16 +243,17 @@ class TIM_GD(TIM):
             logits_s = self.get_logits(support)
             logits_q = self.get_logits(query)
 
+
             ce = - (y_s_one_hot * torch.log(logits_s.softmax(2) + 1e-12)).sum(2).mean(1).sum(0)
             q_probs = logits_q.softmax(2)
             q_cond_ent = - (q_probs * torch.log(q_probs + 1e-12)).sum(2).mean(1).sum(0)
-            q_ent = - (q_probs.mean(1) * torch.log(q_probs.mean(1))).sum(1).sum(0)
+            q_ent = - (q_probs.mean(1) * torch.log(q_probs.mean(1) + 1e-12)).sum(1).sum(0)
             loss = self.loss_weights[0] * ce - (self.loss_weights[1] * q_ent - self.loss_weights[2] * q_cond_ent)
 
             optimizer.zero_grad()
-            loss.backward()           
+            loss.backward()
             optimizer.step()
-
+            
             t1 = time.time()
             self.model.eval()
 
