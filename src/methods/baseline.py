@@ -190,11 +190,11 @@ class Baseline(object):
             
         else:
             # Extract features
-            support, query = extract_features(model=self.model, support=x_s, query=x_q)
+            #support, query = extract_features(model=self.model, support=x_s, query=x_q)
 
             # Transfer tensors to GPU if needed
-            support = support.to(self.device)  # [ N * (K_s + K_q), d]
-            query = query.to(self.device)  # [ N * (K_s + K_q), d]
+            support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
+            query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
             y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
         

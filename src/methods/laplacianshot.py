@@ -283,10 +283,10 @@ class LaplacianShot(object):
             
         else:
             # Extract features
-            z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
 
             # Perform normalizations required
-            support, query = self.normalization(z_s=z_s, z_q=z_q, train_mean=train_mean)
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
 
             support = support.numpy()
             query = query.numpy()

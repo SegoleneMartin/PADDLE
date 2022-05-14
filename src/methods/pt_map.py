@@ -170,14 +170,13 @@ class PT_MAP(object):
 
         else:
             # Extract features
-            z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
 
             self.logger.info(' ==> Executing initial data transformation ...')
             # Power transform
-            support, query = self.power_transform(support=z_s, query=z_q)
+            support, query = self.power_transform(support=x_s, query=x_q)
 
         data = torch.cat((support, query), dim=1)
-        print("data", data.size())
 
         data = self.QRreduction(data)
         data = self.scaleEachUnitaryDatas(data)
@@ -192,8 +191,6 @@ class PT_MAP(object):
             y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
 
-        print("data", data.size())
-        print('y_s ', y_s.size(), y_q.size())
         gaus_model = self.get_GaussianModel()
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,
                                          shot=shot, n_ways=self.num_classes, n_queries=0, n_nfeat=data.size(2))

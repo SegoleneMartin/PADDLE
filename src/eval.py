@@ -12,6 +12,7 @@ from src.datasets import Tasks_Generator, get_dataset, get_dataloader, SamplerSu
 import torch
 #from src import datasets
 import os
+from src.utils import load_pickle, save_pickle
 import random
 
 class Evaluator:
@@ -58,8 +59,56 @@ class Evaluator:
         y_s = torch.cat(y_s)
         #torch.save(support, 'features_support.pt')
         #torch.save(y_s, 'labels_support.pt')
-        
 
+        
+    def extract_features(self, model, model_path, model_tag, used_set, fresh_start, loaders_dic):
+        """
+        inputs:
+            model : The loaded model containing the feature extractor
+            loaders_dic : Dictionnary containing training and testing loaders
+            model_path : Where was the model loaded from
+            model_tag : Which model ('final' or 'best') to load
+            used_set : Set used between 'test' and 'val'
+            n_ways : Number of ways for the task
+
+        returns :
+            extracted_features_dic : Dictionnary containing all extracted features and labels
+        """
+
+        # Load features from memory if previously saved ...
+        save_dir = os.path.join(model_path, model_tag, used_set)
+        filepath = os.path.join(save_dir, 'output.plk')
+        if os.path.isfile(filepath) and (not fresh_start):
+            extracted_features_dic = load_pickle(filepath)
+            print(" ==> Features loaded from {}".format(filepath))
+            return extracted_features_dic
+
+        # ... otherwise just extract them
+        else:
+            print(" ==> Beginning feature extraction")
+            os.makedirs(save_dir, exist_ok=True)
+
+        model.eval()
+        with torch.no_grad():
+
+            all_features = []
+            all_labels = []
+            for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic['support'], False)):
+                inputs = inputs.to(self.device).unsqueeze(0)
+                labels = torch.Tensor([labels])
+                print("step 1")
+                outputs, _ = model(inputs, True)
+                print("step 2")
+                all_features.append(outputs.cpu())
+                all_labels.append(labels)
+            all_features = torch.cat(all_features, 0)
+            all_labels = torch.cat(all_labels, 0)
+            extracted_features_dic = {'concat_features': all_features,
+                                      'concat_labels': all_labels
+                                      }
+        print(" ==> Saving features to {}".format(filepath))
+        save_pickle(filepath, extracted_features_dic)
+        return extracted_features_dic
                 
                 
 
@@ -96,6 +145,22 @@ class Evaluator:
         # torch.save(train_mean, 'train_mean_inatural')
         train_mean = torch.load('train_mean_' + self.args.dataset + '.pt')
 
+        # Extract features (just load them if already in memory)
+        extracted_features_dic_support = self.extract_features(model=model,
+                                                       model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
+                                                       loaders_dic=dataset, used_set='support', fresh_start=self.args.fresh_start)
+        if self.args.used_set_support != self.args.used_set_query:
+            extracted_features_dic_query = self.extract_features(model=model,
+                                                       model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
+                                                       loaders_dic=dataset, used_set='query', fresh_start=self.args.fresh_start)
+        else:
+            extracted_features_dic_query = extracted_features_dic_support 
+
+        all_features_support = extracted_features_dic_support['concat_features']
+        all_labels_support = extracted_features_dic_support['concat_labels'].long()
+        all_features_query = extracted_features_dic_query['concat_features']
+        all_labels_query = extracted_features_dic_query['concat_labels'].long()
+
         results = []
         results_F1 = []
         for shot in self.args.shots:
@@ -105,18 +170,27 @@ class Evaluator:
             for i in range(int(self.args.number_tasks/self.args.batch_size)):
                 #n_ways = random.randint(self.args.n_ways_min, self.args.n_ways_max)
                 n_ways = self.args.n_ways
-                sampler = CategoriesSampler(dataset['support'].labels, dataset['query'].labels, self.args.batch_size,
+                sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
                                         n_ways, self.args.num_classes_test, shot, self.args.n_query,
                                         self.args.balanced, self.args.alpha_dirichlet)
-                sampler.create_list_classes(dataset['support'].labels, dataset['query'].labels)
+                sampler.create_list_classes(all_labels_support, all_labels_query)
                 sampler_support = SamplerSupport(sampler)
                 sampler_query = SamplerQuery(sampler)
 
-                test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
-                                             sampler=sampler_support, pin_memory=False)
+                test_loader_query = []
+                for indices in sampler_query :
+                    test_loader_query.append((all_features_query[indices,:], all_labels_query[indices]))
+
+                test_loader_support = []
+                for indices in sampler_support :
+                    test_loader_support.append((all_features_support[indices,:], all_labels_support[indices]))
+                
+                #test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
+                #                             sampler=sampler_support, pin_memory=False)
+
     
-                test_loader_query = get_dataloader(sets=dataset['query'], args=self.args,
-                                             sampler=sampler_query, pin_memory=False)
+                #test_loader_query = get_dataloader(sets=dataset['query'], args=self.args,
+                #                             sampler=sampler_query, pin_memory=False)
       
                 task_generator = Tasks_Generator(n_ways=n_ways, num_classes=self.args.num_classes_test, shot=shot, n_query=self.args.n_query, loader_support=test_loader_support, loader_query=test_loader_query, train_mean=train_mean, log_file=self.log_file)
               
@@ -165,7 +239,6 @@ class Evaluator:
 
             if os.path.isfile(name_file_1) == True:
                 f = open(name_file_1, 'a')
-                print('ok')
             else:
                 f = open(name_file_1, 'w')
                 

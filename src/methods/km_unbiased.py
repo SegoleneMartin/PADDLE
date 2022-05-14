@@ -137,7 +137,7 @@ class KM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        support, query = extract_features(self.model, support, query)
+        #support, query = extract_features(self.model, support, query)
         support = support.to(self.device)
         query = query.to(self.device)
 

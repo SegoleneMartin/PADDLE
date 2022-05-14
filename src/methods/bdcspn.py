@@ -141,19 +141,16 @@ class BDCSPN(object):
         
         else:
             # Extract features
-            z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
 
             # Perform normalizations required
-            support, query = self.normalization(z_s=z_s, z_q=z_q, train_mean=train_mean)
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
             support = support.numpy()
             query = query.numpy()
             # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
             # y_s = y_s.squeeze(2)[:, :self.num_classes][0]
             y_q = y_q.long().squeeze(2).numpy()
-            print("query ", query.shape)
-            print("support ", support.shape)
             support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
-            print("support ", support.shape)
 
         # support = torch.from_numpy(support)
         # query = torch.from_numpy(query)

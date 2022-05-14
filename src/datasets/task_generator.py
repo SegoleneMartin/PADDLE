@@ -59,6 +59,7 @@ class Tasks_Generator:
                             train_mean: torch.tensor of shape [feature_dim]}
         """
         tasks_dics = []
+        """
         iter_support = iter(self.loader_support)
         iter_query = iter(self.loader_query)
         assert len(iter_query) == len(iter_support)
@@ -70,7 +71,15 @@ class Tasks_Generator:
             (data_query, labels_query, _) = query
             task = self.get_task(data_support, data_query, labels_support, labels_query)
             tasks_dics.append(task)
-                    
+        """
+        for support, query in zip(self.loader_support, self.loader_query):
+            (data_support, labels_support) = support
+            (data_query, labels_query) = query
+            task = self.get_task(data_support, data_query, labels_support, labels_query)
+            tasks_dics.append(task)
+            data_support = data_support.detach()
+
+
         """
         for i, support in enumerate(self.loader_support):
             print('in')
@@ -85,7 +94,7 @@ class Tasks_Generator:
         """ 
                  
             
-
+        '''
         # Now merging all tasks into 1 single dictionnary
         merged_tasks = {}
         n_tasks = len(tasks_dics)
@@ -99,4 +108,18 @@ class Tasks_Generator:
                 merged_tasks[key] = torch.cat([tasks_dics[i][key] for i in range(n_tasks)], dim=0).view(n_tasks,
                                                                                                         n_samples, -1)
         merged_tasks['train_mean'] = self.train_mean
+        '''
+        # Now merging all tasks into 1 single dictionnary
+        merged_tasks = {}
+        n_tasks = len(tasks_dics)
+        for key in tasks_dics[0].keys():
+            n_samples = tasks_dics[0][key].size(0)
+            if key == 'x_s' or key == 'x_q':
+                merged_tasks[key] = torch.cat([tasks_dics[i][key] for i in range(n_tasks)], dim=0).view(n_tasks,
+                                                                                                        n_samples, 512)
+            else:
+                merged_tasks[key] = torch.cat([tasks_dics[i][key] for i in range(n_tasks)], dim=0).view(n_tasks,
+                                                                                                        n_samples, -1)
+        merged_tasks['train_mean'] = self.train_mean
+
         return merged_tasks

@@ -91,8 +91,6 @@ class KM(object):
         """
 
         preds_q = self.p.argmax(2)
-        print('y_q', y_q)
-        print('preds', preds_q)
         n_tasks, q_shot = preds_q.size()
         self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
@@ -142,7 +140,7 @@ class KM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        support, query = extract_features(self.model, support, query)
+        #support, query = extract_features(self.model, support, query)
         support = support.to(self.device)
         query = query.to(self.device)
         
