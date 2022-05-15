@@ -8,3 +8,4 @@ exemple_sampler_data
 *.sublime-project
 *.sublime-workspace
 *.DS_Store
+logs

@@ -14,7 +14,7 @@ import torch
 import os
 from src.utils import load_pickle, save_pickle
 import random
-
+from tqdm import tqdm
 class Evaluator:
     def __init__(self, device, args, log_file):
         self.device = device
@@ -168,7 +168,7 @@ class Evaluator:
         
             results_task = []
             results_task_F1 = []
-            for i in range(int(self.args.number_tasks/self.args.batch_size)):
+            for i in tqdm(range(int(self.args.number_tasks/self.args.batch_size))):
                 #n_ways = random.randint(self.args.n_ways_min, self.args.n_ways_max)
                 n_ways = self.args.n_ways
                 sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
@@ -236,7 +236,9 @@ class Evaluator:
             
         self.logger.info('----- Final test results -----')
         for shot in self.args.shots:
-            name_file_1 = 'results_test/{}/{}/{}_alpha{}_shots{}.txt'.format(self.args.dataset, self.args.arch, self.args.method, self.args.alpha_dirichlet, shot)
+            root_file = os.path.join('results_test', self.args.dataset, self.args.arch)
+            os.makedirs(root_file, exist_ok=True)
+            name_file_1 = os.path.join(root_file, f'{self.args.method}_alpha{self.args.alpha}_shots{shot}.txt')
 
             if os.path.isfile(name_file_1) == True:
                 f = open(name_file_1, 'a')

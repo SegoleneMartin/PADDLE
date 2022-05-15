@@ -1,6 +1,27 @@
-SERVER_IP="narval"
-SERVER_PATH="~/scratch/sego/"
+# SERVER_IP="narval"
+# SERVER_PATH="~/scratch/sego/"
 
-rsync -avm --exclude '*.pyc' src ${SERVER_IP}:${SERVER_PATH}
-rsync -avm --exclude '*.pyc' scripts ${SERVER_IP}:${SERVER_PATH} 
-rsync -avm --exclude '*.pyc' config ${SERVER_IP}:${SERVER_PATH}
+
+SERVER_IP="shannon"
+SERVER_PATH="/ssd/repos/Few-Shot-Classification/sego"
+
+
+rsync -av  \
+  --exclude .git \
+  --exclude logs \
+  --exclude archive \
+  --exclude checkpoints \
+  --exclude *.tar \
+  --exclude training.log \
+  --exclude results \
+  --exclude __pycache__ \
+  --exclude tmp \
+  --exclude *.sublime-project \
+  --exclude *.sublime-workspace \
+  --exclude output \
+  --exclude *.md \
+  --exclude plots \
+  --exclude *.so \
+  ./ ${SERVER_IP}:${SERVER_PATH}/
+
+  

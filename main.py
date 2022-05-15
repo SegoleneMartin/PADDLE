@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
     #callback = None if args.visdom_port is None else VisdomLogger(port=args.visdom_port)
     callback = None
     if args.seed is not None:

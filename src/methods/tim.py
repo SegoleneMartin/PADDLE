@@ -38,7 +38,6 @@ class TIM(object):
         self.test_F1 = []
 
     
-
     def get_logits(self, samples):
         """
         inputs:
@@ -51,6 +50,7 @@ class TIM(object):
         logits = self.temp * (samples.matmul(self.weights.transpose(1, 2)) \
                               - 1 / 2 * (self.weights**2).sum(2).view(n_tasks, 1, -1) \
                               - 1 / 2 * (samples**2).sum(2).view(n_tasks, -1, 1))  #
+        # logits = self.temp * 1/2 * (torch.cdist(samples, self.weights) ** 2)
         return logits
 
     def get_preds(self, samples):
