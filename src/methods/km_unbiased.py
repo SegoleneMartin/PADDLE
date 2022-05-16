@@ -8,6 +8,8 @@ import time
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
+from loguru import logger
+from copy import deepcopy
 
 class KM(object):
     def __init__(self, model, device, log_file, args):
@@ -216,15 +218,32 @@ class KM_UNBIASED(KM):
         n_task, num_classes = y_s_one_hot.size(0), y_s_one_hot.size(2)
         self.v = torch.zeros(n_task, num_classes).to(self.device)
 
+        index = 0
         for i in tqdm(range(self.iter)):
+
+            # old_loss = loss.item()
+            if i > 0:
+                p_old = deepcopy(self.p.detach())
+                weights_old = deepcopy(self.weights.detach())
+
             self.p_update(query)
             self.v_update()
             self.weights_update(support, query, y_s_one_hot)
+
+            if i > 0:
+                p_diff = (p_old - self.p).norm().item()
+                weight_diff = (weights_old - self.weights).norm().item()
+                converged = p_diff <= 1e-5 and weight_diff <= 1e-5
+                print(weight_diff)
+                if converged:
+                    logger.info(f"Converged in {index} iterations")
+                index += 1
 
         t1 = time.time()
         self.record_info(new_time=t1-t0, y_q=y_q)
         t0 = time.time()
         
+
 class MinMaxScaler(object):
     """MinMax Scaler
 

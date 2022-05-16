@@ -8,6 +8,9 @@ import time
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
+import math
+from loguru import logger
+from copy import deepcopy
 
 
 class KM(object):
@@ -40,7 +43,7 @@ class KM(object):
         logits = (- 2 * samples.matmul(self.weights.transpose(1, 2)) \
                   + (self.weights**2).sum(2).view(n_tasks, 1, -1) \
                   + (samples**2).sum(2).view(n_tasks, -1, 1))  #
-        return logits
+        return - logits
 
     def init_weights(self, support, query, y_s, y_q):
         """
@@ -105,8 +108,10 @@ class KM(object):
         query = query.to(self.device)
 
         # Perform normalizations required
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        query, support = scaler(query, support)
+        # scaler = MinMaxScaler(feature_range=(0, 1))
+        # query, support = scaler(query, support)
+        support = F.normalize(support, dim=2)
+        query = F.normalize(query, dim=2)
 
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
@@ -150,18 +155,22 @@ class KM_UNBIASED_GD(KM):
 
         # Initialize p
         self.p = self.get_logits(query).softmax(-1)
+        self.record_info(new_time=0., y_q=y_q)
 
         self.p.requires_grad_()
         self.weights.requires_grad_()
-        optimizer = torch.optim.SGD([self.weights, self.p], lr=self.lr)
+        optimizer = torch.optim.Adam([self.weights, self.p], lr=self.lr)
 
         all_samples = torch.cat([support, query], 1)
 
-        for i in tqdm(range(self.iter)):
-            t1 = time.time()
-            self.record_info(new_time=t1-t0, y_q=y_q)
-            t0 = time.time()
+        converged = False
+        loss = torch.Tensor([math.inf])
+        index = 0
+        while not converged:
 
+            # old_loss = loss.item()
+            p_old = deepcopy(self.p.detach())
+            weights_old = deepcopy(self.weights.detach())
             # Data fitting term
             l2_distances = torch.cdist(all_samples, self.weights) ** 2  # [n_tasks, ns + nq, K]
             all_p = torch.cat([y_s_one_hot, self.p], dim=1) # [n_tasks, ns + nq, K]
@@ -178,14 +187,22 @@ class KM_UNBIASED_GD(KM):
             loss.backward()
             optimizer.step()
 
-            print(loss)
+            # converged = abs(loss.item() - old_loss) <= 1e-6
 
             # Projection
             with torch.no_grad():
-                # self.p = self.simplex_project(self.p)
-                self.p = self.p.softmax(-1)
-        delattr(self, 'p')
-        delattr(self, 'weights')
+                self.p = self.simplex_project(self.p)
+                p_diff = (p_old - self.p).norm().item()
+                weight_diff = (weights_old - self.weights).norm().item()
+                converged = p_diff <= 1e-5 and weight_diff <= 1e-5
+            print(weight_diff)
+            index += 1
+        t1 = time.time()
+        self.record_info(new_time=t1-t0, y_q=y_q)
+        t0 = time.time()
+        logger.info(f"Converged in {index}")
+        # delattr(self, 'p')
+        # delattr(self, 'weights')
 
     def simplex_project(self, p: torch.Tensor, l=1.0):
         """

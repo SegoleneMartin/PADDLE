@@ -77,7 +77,8 @@ def main(args):
                                 marker=markers[method_index],
                                 label=list_name[method_index],
                                 color=colors[method_index],
-                                linewidth=1.5 if method_index == 0 else 0.5)
+                                linewidth=1.5 if method_index == 0 else 1.0,
+                                markersize=0.5)
                         if max(list_acc) > max_:
                             max_ = max(list_acc)
                         if min(list_acc) < min_:
