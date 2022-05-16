@@ -11,7 +11,7 @@ from scipy import sparse
 import matplotlib
 matplotlib.use('Agg')
 from sklearn.neighbors import NearestNeighbors
-from ..utils import get_metric, Logger, extract_features
+from ..utils import get_metric, Logger, extract_features, get_one_hot
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.optimize import linear_sum_assignment
 
@@ -20,6 +20,8 @@ class LaplacianShot(object):
         self.device = device
         self.knn = args.knn
         self.arch = args.arch
+        self.dataset = args.dataset
+        self.used_set_support = args.used_set_support
         self.balanced = args.balanced
         self.dataset = args.dataset
         self.proto_rect = args.proto_rect
@@ -45,7 +47,7 @@ class LaplacianShot(object):
         self.logger.del_logger()
 
 
-    def record_info(self, acc_list, F1_list, ent_energy, new_time):
+    def record_info(self, acc, f1, ent_energy, new_time):
         """
         inputs:
             acc_list : torch.Tensor of shape [iter]
@@ -53,13 +55,14 @@ class LaplacianShot(object):
             new_time: torch.Tensor of shape [iter]
         """
 
-        self.test_acc.append(acc_list)
-        self.test_F1.append(F1_list)
+        self.test_acc.append(acc)
+        self.test_F1.append(f1)
         self.ent_energy.append(ent_energy)
         self.timestamps.append(new_time)
 
     def get_logs(self):
-        self.test_acc = torch.stack(self.test_acc, dim=0).squeeze(2).cpu().numpy()
+        self.test_acc = np.array([self.test_acc])
+        #self.test_acc = torch.stack(self.test_acc, dim=0).squeeze(2).cpu().numpy()
         self.test_F1 = np.array([self.test_F1])
         self.ent_energy = np.array(self.ent_energy)
         self.timestamps = np.array(self.timestamps).sum(0)
@@ -190,16 +193,14 @@ class LaplacianShot(object):
             E_list.append(E)
             # print('entropy_energy is ' +repr(E) + ' at iteration ',i)
             l = np.argmax(Y, axis=1)
-            out = np.take(y_s, l)
+            if self.dataset == 'inatural' and self.used_set_support == 'repr':
+                out = l
+            else:
+                out = np.take(y_s, l)
             timestamps.append(time.time()-t0)
 
             if (i > 1 and (abs(E - oldE) <= 1e-6 * abs(oldE))):
-                # print('Converged')
-                #out_list.append(torch.from_numpy(out))
-                #acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
                 for j in range(bound_iteration-i-1):
-                    #out_list.append(out_list[i].detach().clone())
-                    #acc_list.append(acc_list[i].detach().clone())
                     E_list.append(E_list[i])
                     timestamps.append(0)
                 break
@@ -210,12 +211,12 @@ class LaplacianShot(object):
                 #out_list.append(torch.from_numpy(out))
                 #acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
             t0 = time.time()
-        out_list.append(torch.from_numpy(out))
-        acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
-        out_list = torch.stack(out_list, dim=0)
-        acc_list = torch.stack(acc_list, dim=0).mean(dim=1, keepdim=True)
+        #out_list.append(out)
+        #acc = (y_q[task_i] == out).float().mean()
+        #out_list = torch.cat(out_list, dim=0)
+        #acc_list = torch.stack(acc_list, dim=0).mean(dim=1, keepdim=True)
 
-        return out_list, acc_list, E_list, timestamps
+        return out, E_list, timestamps
 
     def get_tuned_lmd(self):
         """"
@@ -249,23 +250,59 @@ class LaplacianShot(object):
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
         train_mean = task_dic['train_mean']
 
-        # Extract features
-        z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+        if self.dataset == 'inatural' and self.used_set_support == 'repr':
+            # use precomputed features of the support set
+            
+            # Extract features
+            # support, query = extract_features(self.model, x_s, x_q)
+            # support = torch.load('features_support.pt').to(self.device)
+            # support = support.unsqueeze(0)
+            # y_s = torch.load('labels_support.pt').to(self.device)
+            # y_s = y_s.unsqueeze(0)
 
-        # Perform normalizations required
-        support, query = self.normalization(z_s=z_s, z_q=z_q, train_mean=train_mean)
+            # Perform normalizations required
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
+            y_s = y_s.squeeze(2).to(self.device)
+            y_q = y_q.squeeze(2).to(self.device)
+            #support = x_s
+            #query = x_q
+            
+            #support = F.normalize(support, dim=2)
+            #query = F.normalize(query, dim=2)
+            support = support.to(self.device)
+            query = query.to(self.device)
 
-        support = support.numpy()
-        query = query.numpy()
-        # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-        y_s = y_s.numpy().squeeze(2)[:, :self.num_classes][0]
-        y_q = y_q.numpy().squeeze(2)
+            if self.proto_rect:
+                self.logger.info(" ==> Executing proto-rectification ...")
+                support = self.proto_rectification(support=support, query=query, shot=shot)
+            else:
+                #support = support.reshape(self.number_tasks, shot, self.n_ways, support.shape[-1]).mean(1)
+                one_hot = get_one_hot(y_s)
+                counts = one_hot.sum(1).view(support.size()[0], -1, 1)
+                weights = one_hot.transpose(1, 2).matmul(support)
+                support = weights / counts
 
-        if self.proto_rect:
-            self.logger.info(" ==> Executing proto-rectification ...")
-            support = self.proto_rectification(support=support, query=query, shot=shot)
+            support = support.cpu().numpy()
+            query = query.cpu().numpy()
+            y_s = y_s.cpu().numpy()
+            y_q = y_q.cpu().numpy()
+            
         else:
-            support = support.reshape(self.number_tasks, shot, self.num_classes, support.shape[-1]).mean(1)
+            # Extract features
+            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
+
+            # Perform normalizations required
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
+
+            support = support.numpy()
+            query = query.numpy()
+            y_q = y_q.numpy().squeeze(2)
+
+            if self.proto_rect:
+                self.logger.info(" ==> Executing proto-rectification ...")
+                support = self.proto_rectification(support=support, query=query, shot=shot)
+            else:
+                support = support.reshape(self.number_tasks, shot, self.num_classes, support.shape[-1]).mean(1)
 
         # Run adaptation
         self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
@@ -300,13 +337,18 @@ class LaplacianShot(object):
             distance = LA.norm(substract, 2, axis=-1)
             unary = distance.transpose() ** 2
             W = self.create_affinity(query[i])
-            preds, acc_list, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s, y_q=y_q, task_i=i,
+            if self.dataset == 'inatural' and self.used_set_support == 'repr':
+                y_s_i = np.unique(y_s[i])
+            else:
+                y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
+            preds, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s_i, y_q=y_q, task_i=i,
                                                 bound_iteration=self.iter)
-            q_shot = preds.size(1)
+            q_shot = len(preds)
 
             ground_truth = list(y_q[i].reshape(q_shot))
-            preds = list(preds.reshape(q_shot))
+            #preds = list(preds.reshape(q_shot))
+            acc = (y_q[i].reshape(q_shot) == preds).mean()
             union = list(range(self.num_classes))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.record_info(acc_list=acc_list, F1_list=f1, ent_energy=ent_energy, new_time=times)
+            self.record_info(acc=acc, f1=f1, ent_energy=ent_energy, new_time=times)
             union = list(range(self.num_classes))

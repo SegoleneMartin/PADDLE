@@ -30,7 +30,7 @@ class CategoriesSampler():
                              Query data and labels class sequence is :
                                [a a a a a a a a b b b b b b b c c c c c d d d d d e e e e e ...]
     """
-    def __init__(self, label_support, label_query, n_batch, n_cls, num_classes, s_shot, n_query, balanced, alpha = 2):
+    def __init__(self, label_support, label_query, n_batch, n_cls, num_classes, s_shot, n_query, balanced, used_set_support, alpha = 2):
         self.n_batch = n_batch  # the number of iterations in the dataloader
         self.n_cls = n_cls
         self.s_shot = s_shot
@@ -38,6 +38,7 @@ class CategoriesSampler():
         self.balanced = balanced
         self.alpha = alpha
         self.num_classes = num_classes
+        self.used_set_support = used_set_support
         
     def create_list_classes(self, label_support, label_query):
         label_support = np.array(label_support)  # all data label
@@ -66,6 +67,7 @@ class SamplerSupport:
         self.list_classes = cat_samp.list_classes
         self.n_batch = cat_samp.n_batch
         self.s_shot = cat_samp.s_shot
+        self.used_set_support = cat_samp.used_set_support
         self.m_ind_support = cat_samp.m_ind_support
 
     def __len__(self):
@@ -76,14 +78,24 @@ class SamplerSupport:
             support = []
             classes = self.list_classes[i_batch]
             
-            for c in classes:
-                l = self.m_ind_support[c]  # all data indexs of this class
-                #pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
-                pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
-                support.append(l[pos])
-            support = torch.stack(support).t().reshape(-1)
-            #support = torch.stack(support).reshape(-1)
-            #support = torch.cat(support)
+            if self.used_set_support == 'repr':
+                for c in classes:
+                    l = self.m_ind_support[c]  # all data indexs of this class
+                    #pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
+                    pos = torch.randperm(len(l))[:]  # sample n_per data index of this class
+                    support.append(l[pos])
+                #support = torch.stack(support).t().reshape(-1)
+                #support = torch.stack(support).reshape(-1)
+                support = torch.cat(support)
+            else:
+                for c in classes:
+                    l = self.m_ind_support[c]  # all data indexs of this class
+                    #pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
+                    pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
+                    support.append(l[pos])
+                support = torch.stack(support).t().reshape(-1)
+                #support = torch.stack(support).reshape(-1)
+                # support = torch.cat(support)
             
             yield support
 
@@ -131,6 +143,7 @@ class SamplerQuery:
                         sum_pos += min(len(pos),nb_shot)
                         #assert len(pos) == nb_shot
                         query.append(l[pos])
+            
                 query = torch.cat(query)
 
                 

@@ -16,6 +16,7 @@ class TIM(object):
         self.device = device
         self.temp = args.temp
         self.loss_weights = args.loss_weights.copy()
+        print(self.loss_weights)
         self.iter = args.iter
         self.model = model
         self.log_file = log_file
@@ -169,36 +170,20 @@ class TIM(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
 
-        if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            print('OUI')
-            # Extract features
-            support, query = extract_features(self.model, x_s, x_q)
-            support = torch.load('features_support.pt').to(self.device)
-            support = support.unsqueeze(0)
-            y_s = torch.load('labels_support.pt').to(self.device)
-            y_s = y_s.unsqueeze(0)
-            y_q = y_q.long().squeeze(2).to(self.device)
-            query = query.to(self.device)
-            
-             # Perform normalizations required
-            support = F.normalize(support, dim=2)
-            query = F.normalize(query, dim=2)
-            
-        else:
-            # Transfer tensors to GPU if needed
-            support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
-            query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
-            y_s = y_s.long().squeeze(2).to(self.device)
-            y_q = y_q.long().squeeze(2).to(self.device)
+        # Transfer tensors to GPU if needed
+        support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
+        query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
+        y_s = y_s.long().squeeze(2).to(self.device)
+        y_q = y_q.long().squeeze(2).to(self.device)
 
-            # Extract features
-            #support, query = extract_features(self.model, support, query)
+        # Extract features
+        #support, query = extract_features(self.model, support, query)
 
-            # Perform normalizations required
-            support = F.normalize(support, dim=2)
-            query = F.normalize(query, dim=2)
-            support = support.to(self.device)
-            query = query.to(self.device)
+        # Perform normalizations required
+        support = F.normalize(support, dim=2)
+        query = F.normalize(query, dim=2)
+        support = support.to(self.device)
+        query = query.to(self.device)
         
 
         # Initialize weights

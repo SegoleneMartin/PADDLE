@@ -37,7 +37,10 @@ class PT_MAP(object):
         self.test_F1 = []
 
     def getAccuracy(self, preds_q, y_q):
+        print('y_q', y_q)
+        
         preds_q = preds_q.argmax(dim=2)
+        print('preds', preds_q)
 
         acc_test = (preds_q == y_q).float().mean(1, keepdim=True)
 
@@ -109,7 +112,7 @@ class PT_MAP(object):
         model.updateFromEstimate(m_estimates, self.alpha)
 
     def run_adaptation(self, model, data, y_s, y_q, shot):
-
+        print("data size", data.size())
         _, preds_q = model.getProbas(data=data, y_s=y_s, n_tasks=self.number_tasks, n_sum_query=self.n_sum_query,
                                           n_queries=self.n_queries, shot=shot)
 
@@ -122,8 +125,8 @@ class PT_MAP(object):
             _, preds_q = model.getProbas(data=data, y_s=y_s, n_tasks=self.number_tasks, n_sum_query=self.n_sum_query,
                                              n_queries=self.n_queries, shot=shot)
 
-            self.record_info(y_q=y_q, preds_q=preds_q, new_time=time.time()-t0)
             t0 = time.time()
+        self.record_info(y_q=y_q, preds_q=preds_q, new_time=time.time()-t0)
 
     def record_info(self, y_q, preds_q, new_time):
         """
@@ -131,7 +134,10 @@ class PT_MAP(object):
             y_q : torch.Tensor of shape [n_tasks, q_shot]
             q_pred : torch.Tensor of shape [n_tasks, q_shot]:
         """
+
         preds_q = preds_q.argmax(dim=2)
+        print('y_q', y_q)
+        print('preds', preds_q)
         n_tasks, q_shot = preds_q.size()
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
         self.timestamps.append(new_time)
@@ -154,19 +160,20 @@ class PT_MAP(object):
         # Extract support and query
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
-        
         if self.dataset == 'inatural' and self.used_set_support == 'repr':
             # Extract features
-            support, query = extract_features(self.model, x_s, x_q)
-            support = torch.load('features_support.pt').to(self.device)
-            support = support.unsqueeze(0)
-            y_s = torch.load('labels_support.pt').to(self.device)
-            y_s = y_s.unsqueeze(0)
+            #support, query = extract_features(self.model, x_s, x_q)
+            #support = torch.load('features_support.pt').to(self.device)
+            #support = support.unsqueeze(0)
+            #y_s = torch.load('labels_support.pt').to(self.device)
+            #y_s = y_s.unsqueeze(0)
+            support = x_s.to(self.device)
+            query = x_q.to(self.device)
+            y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
-            query = query.to(self.device)
             self.logger.info(' ==> Executing initial data transformation ...')
             # Power transform
-            support, query = self.power_transform(support=support, query=support)
+            support, query = self.power_transform(support=support, query=query)
 
         else:
             # Extract features
@@ -177,7 +184,6 @@ class PT_MAP(object):
             support, query = self.power_transform(support=x_s, query=x_q)
 
         data = torch.cat((support, query), dim=1)
-
         data = self.QRreduction(data)
         data = self.scaleEachUnitaryDatas(data)
         data = self.centerData(data, shot)
@@ -190,6 +196,9 @@ class PT_MAP(object):
         else:
             y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
+
+        print('y_s', y_s)
+            
 
         gaus_model = self.get_GaussianModel()
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,

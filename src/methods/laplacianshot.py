@@ -254,15 +254,21 @@ class LaplacianShot(object):
             # use precomputed features of the support set
             
             # Extract features
-            support, query = extract_features(self.model, x_s, x_q)
-            support = torch.load('features_support.pt').to(self.device)
-            support = support.unsqueeze(0)
-            y_s = torch.load('labels_support.pt').to(self.device)
-            y_s = y_s.unsqueeze(0)
+            # support, query = extract_features(self.model, x_s, x_q)
+            # support = torch.load('features_support.pt').to(self.device)
+            # support = support.unsqueeze(0)
+            # y_s = torch.load('labels_support.pt').to(self.device)
+            # y_s = y_s.unsqueeze(0)
 
             # Perform normalizations required
-            support = F.normalize(support, dim=2)
-            query = F.normalize(query, dim=2)
+            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
+            y_s = y_s.squeeze(2).to(self.device)
+            y_q = y_q.squeeze(2).to(self.device)
+            #support = x_s
+            #query = x_q
+            
+            #support = F.normalize(support, dim=2)
+            #query = F.normalize(query, dim=2)
             support = support.to(self.device)
             query = query.to(self.device)
 

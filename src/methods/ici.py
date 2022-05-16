@@ -1,5 +1,7 @@
 from typing import Tuple, List
 import torch
+from tqdm import tqdm
+
 import torch.nn.functional as F
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -113,7 +115,7 @@ class ICI(object):
         t0 = time.time()
         probs_q = []
         n_tasks, _, _ = support_features.size()
-        for i in range(n_tasks):
+        for i in tqdm(range(n_tasks)):
             support_X, support_y = support_features.cpu().numpy()[i], support_labels.cpu().numpy()[i]
             way, num_support = support_labels.unique().size(0), len(support_X)
 
