@@ -22,7 +22,11 @@ class GaussianModel(object):
 
     def initFromLabelledDatas(self, data, y_s, n_tasks, shot, n_ways, n_queries, n_nfeat):
         if self.imbalanced_support==False:
-            self.mus = data.reshape(n_tasks, shot+n_queries,n_ways, n_nfeat)[:,:shot,].mean(1)
+            #self.mus = data.reshape(n_tasks, shot+n_queries,n_ways, n_nfeat)[:,:shot,].mean(1)
+            one_hot = get_one_hot(y_s)
+            counts = one_hot.sum(1).view(data.size()[0], -1, 1)
+            weights = one_hot.transpose(1, 2).matmul(data)
+            self.mus = weights / counts
         else:
             one_hot = get_one_hot(y_s)
             counts = one_hot.sum(1).view(data.size()[0], -1, 1)
@@ -70,7 +74,7 @@ class GaussianModel(object):
         # Query probabilities
         p_xj_test, _ = self.compute_optimal_transport(dist[:, n_lsamples:], r, c, epsilon=1e-6)
         p_xj[:, n_lsamples:] = p_xj_test
-
+        
         # Support probabilities
         p_xj[:, :n_lsamples].fill_(0)
         p_xj[:, :n_lsamples].scatter_(2, y_s.unsqueeze(2), 1)

@@ -3,22 +3,31 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from ..utils import get_one_hot
+
 
 class GaussianModel(object):
-    def __init__(self, device, n_ways, num_classes_test, lam):
+    def __init__(self, device, n_ways, num_classes_test, lam, imbalanced_support=True):
         self.device = device
         self.mus = None  # shape [n_runs][n_ways][n_nfeat]
         self.n_ways = n_ways
         self.lam = lam
         self.num_classes = num_classes_test
+        self.imbalanced_support = imbalanced_support
 
     def clone(self):
         other = GaussianModel(self.n_ways)
         other.mus = self.mus.clone()
         return self
 
-    def initFromLabelledDatas(self, data, n_tasks, shot, n_ways, n_queries, n_nfeat):
-        self.mus = data.reshape(n_tasks, shot+n_queries,n_ways, n_nfeat)[:,:shot,].mean(1)
+    def initFromLabelledDatas(self, data, y_s, n_tasks, shot, n_ways, n_queries, n_nfeat):
+        if self.imbalanced_support==False:
+            self.mus = data.reshape(n_tasks, shot+n_queries,n_ways, n_nfeat)[:,:shot,].mean(1)
+        else:
+            one_hot = get_one_hot(y_s)
+            counts = one_hot.sum(1).view(data.size()[0], -1, 1)
+            weights = one_hot.transpose(1, 2).matmul(data)
+            self.mus = weights / counts
 
     def updateFromEstimate(self, estimate, alpha):
 
@@ -55,12 +64,13 @@ class GaussianModel(object):
         c = torch.ones(n_tasks, self.num_classes) * n_queries
 
         #n_lsamples = self.n_ways * shot
-        n_lsamples = self.num_classes * shot
+        #n_lsamples = self.num_classes * shot
+        n_lsamples = y_s.size()[1]
 
         # Query probabilities
         p_xj_test, _ = self.compute_optimal_transport(dist[:, n_lsamples:], r, c, epsilon=1e-6)
         p_xj[:, n_lsamples:] = p_xj_test
-
+        
         # Support probabilities
         p_xj[:, :n_lsamples].fill_(0)
         p_xj[:, :n_lsamples].scatter_(2, y_s.unsqueeze(2), 1)

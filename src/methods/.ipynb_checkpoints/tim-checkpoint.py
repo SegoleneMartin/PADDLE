@@ -16,12 +16,15 @@ class TIM(object):
         self.device = device
         self.temp = args.temp
         self.loss_weights = args.loss_weights.copy()
+        print(self.loss_weights)
         self.iter = args.iter
         self.model = model
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.num_classes = args.num_classes_test
+        self.dataset = args.dataset
+        self.used_set_support = args.used_set_support
 
     def __del__(self):
         self.logger.del_logger()
@@ -174,7 +177,7 @@ class TIM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        support, query = extract_features(self.model, support, query)
+        #support, query = extract_features(self.model, support, query)
 
         # Perform normalizations required
         support = F.normalize(support, dim=2)
@@ -225,16 +228,17 @@ class TIM_GD(TIM):
             logits_s = self.get_logits(support)
             logits_q = self.get_logits(query)
 
+
             ce = - (y_s_one_hot * torch.log(logits_s.softmax(2) + 1e-12)).sum(2).mean(1).sum(0)
             q_probs = logits_q.softmax(2)
             q_cond_ent = - (q_probs * torch.log(q_probs + 1e-12)).sum(2).mean(1).sum(0)
-            q_ent = - (q_probs.mean(1) * torch.log(q_probs.mean(1))).sum(1).sum(0)
+            q_ent = - (q_probs.mean(1) * torch.log(q_probs.mean(1) + 1e-12)).sum(1).sum(0)
             loss = self.loss_weights[0] * ce - (self.loss_weights[1] * q_ent - self.loss_weights[2] * q_cond_ent)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
+            
             t1 = time.time()
             self.model.eval()
 

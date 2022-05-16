@@ -61,7 +61,7 @@ class Evaluator:
         #torch.save(y_s, 'labels_support.pt')
 
         
-    def extract_features(self, model, model_path, model_tag, used_set, fresh_start, loaders_dic):
+    def extract_features(self, model, model_path, model_tag, used_set, used_set_name, fresh_start, loaders_dic):
         """
         inputs:
             model : The loaded model containing the feature extractor
@@ -76,7 +76,8 @@ class Evaluator:
         """
 
         # Load features from memory if previously saved ...
-        save_dir = os.path.join(model_path, model_tag, used_set)
+        print("used_set_name", used_set_name)
+        save_dir = os.path.join(model_path, model_tag, used_set_name)
         filepath = os.path.join(save_dir, 'output.plk')
         if os.path.isfile(filepath) and (not fresh_start):
             extracted_features_dic = load_pickle(filepath)
@@ -93,7 +94,7 @@ class Evaluator:
 
             all_features = []
             all_labels = []
-            for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic['support'], False)):
+            for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic[used_set], False)):
                 inputs = inputs.to(self.device).unsqueeze(0)
                 labels = torch.Tensor([labels])
                 outputs, _ = model(inputs, True)
@@ -134,6 +135,9 @@ class Evaluator:
         query_set = get_dataset(self.args.used_set_query, args=self.args, **loader_info)
         dataset.update({'query': query_set})
 
+        print("support len", len(support_set))
+        print("query len", len(query_set))
+        
         ## Compute train mean
         name_file = 'train_mean_' + self.args.dataset + '_' + self.args.arch + '.pt'
         if os.path.isfile(name_file) == False:
@@ -149,11 +153,15 @@ class Evaluator:
         # Extract features (just load them if already in memory)
         extracted_features_dic_support = self.extract_features(model=model,
                                                        model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
-                                                       loaders_dic=dataset, used_set='support', fresh_start=self.args.fresh_start)
+                                                       loaders_dic=dataset, used_set='support',
+                                                       used_set_name = self.args.used_set_support,
+                                                               fresh_start=self.args.fresh_start)
         if self.args.used_set_support != self.args.used_set_query:
             extracted_features_dic_query = self.extract_features(model=model,
                                                        model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
-                                                       loaders_dic=dataset, used_set='query', fresh_start=self.args.fresh_start)
+                                                       loaders_dic=dataset, used_set='query', 
+                                                        used_set_name = self.args.used_set_query,
+                                                                 fresh_start=self.args.fresh_start)
         else:
             extracted_features_dic_query = extracted_features_dic_support 
 
@@ -172,8 +180,8 @@ class Evaluator:
                 #n_ways = random.randint(self.args.n_ways_min, self.args.n_ways_max)
                 n_ways = self.args.n_ways
                 sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
-                                        n_ways, self.args.num_classes_test, shot, self.args.n_query,
-                                        self.args.balanced, self.args.alpha_dirichlet)
+                                        n_ways, self.args.num_classes_test, shot, self.args.n_query, 
+                                        self.args.balanced, self.args.used_set_support, self.args.alpha_dirichlet)
                 sampler.create_list_classes(all_labels_support, all_labels_query)
                 sampler_support = SamplerSupport(sampler)
                 sampler_query = SamplerQuery(sampler)
@@ -254,27 +262,6 @@ class Evaluator:
             f.write('\n')
             f.close()
             
-        """
-        name_file = 'test_params_tuned/{}_alpha{}_shots{}.txt'.format(self.args.method, self.args.alpha_dirichlet, self.args.shots[0])
-        #name_file = 'params_tuning/params_tuning_{}.txt'.format(self.args.method)
-        if os.path.isfile(name_file) == True:
-            f = open(name_file, 'a')
-            print('ok')
-        else:
-            f = open(name_file, 'w')
-            print("not found", name_file, os.getcwd())
-            
-        f.write(str(param)+'\t')
-        self.logger.info('----- Final test results -----')
-        for shot in self.args.shots:
-            self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
-                                                                                   mean_accuracies[self.args.shots.index(shot)]))
-            #self.logger.info('{}-shot mean hungarian accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
-            #                                                                       mean_accuracies_hungarian[self.args.shots.index(shot)]))
-            f.write(str(mean_accuracies[self.args.shots.index(shot)]) +'\t' )
-        f.write('\n')
-        f.close()
-        """
         
         #self.logger.info('----- Final test results -----')
         #for shot in self.args.shots:
