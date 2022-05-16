@@ -1,15 +1,12 @@
 # Adaptation of the publicly available code of the NeurIPS 2020 paper entitled "TIM: Transductive Information Maximization":
 # https://github.com/mboudiaf/TIM
 import torch.nn.functional as F
-from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, Logger, extract_features
+from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, Logger
 from tqdm import tqdm
 import torch
 import time
-from sklearn.metrics import accuracy_score
-from scipy.optimize import linear_sum_assignment
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score
-from scipy.optimize import linear_sum_assignment
+from sklearn.metrics import f1_score
 
 class TIM(object):
     def __init__(self, model, device, log_file, args):
@@ -37,7 +34,6 @@ class TIM(object):
         self.test_acc = []
         self.losses = []
         self.test_F1 = []
-
     
     def get_logits(self, samples):
         """

@@ -9,13 +9,13 @@ from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
 
+
 class KM(object):
     def __init__(self, model, device, log_file, args):
-        self.device = device
+        # matS = np.sort(matX, axis=0)[::-1]ice = device
         self.iter = args.iter
         self.alpha = args.alpha
-        #self.alpha = 75
-        self.tau = args.tau
+        self.device = device
         self.model = model
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
@@ -38,45 +38,9 @@ class KM(object):
         """
         n_tasks = samples.size(0)
         logits = (- 2 * samples.matmul(self.weights.transpose(1, 2)) \
-                              + (self.weights**2).sum(2).view(n_tasks, 1, -1) \
-                              + (samples**2).sum(2).view(n_tasks, -1, 1))  #
+                  + (self.weights**2).sum(2).view(n_tasks, 1, -1) \
+                  + (samples**2).sum(2).view(n_tasks, -1, 1))  #
         return logits
-
-    def A(self, p):
-        """
-        inputs:
-
-            p : torch.tensor of shape [n_tasks, q_shot, num_class]
-                where p[i,j,k] = probability of point j in task i belonging to class k
-                (according to our L2 classifier)
-        returns:
-            v : torch.Tensor of shape [n_task, q_shot, num_class]
-        """
-        q_shot = p.size(1)
-        v = p.sum(1) / q_shot
-        return v
-
-    def A_adj(self, v, q_shot):
-        """
-        inputs:
-            V : torch.tensor of shape [n_tasks, num_class]
-            q_shot : int
-        returns:
-            p : torch.Tensor of shape [n_task, q_shot, num_class]
-        """
-        p = v.unsqueeze(1).repeat(1, q_shot, 1) / q_shot
-        return p
-
-    def get_preds(self, p):
-        """
-        inputs:
-            p : torch.Tensor of shape [n_task, s_shot, feature_dim]
-
-        returns :
-            preds : torch.Tensor of shape [n_task, shot]
-        """
-        preds = p.argmax(2)
-        return preds
 
     def init_weights(self, support, query, y_s, y_q):
         """
@@ -96,7 +60,6 @@ class KM(object):
         weights = one_hot.transpose(1, 2).matmul(support)
         self.weights = weights / counts
 
-    
     def record_info(self, new_time, y_q):
         """
         inputs:
@@ -105,7 +68,7 @@ class KM(object):
             y_s : torch.Tensor of shape [n_task, s_shot]
             y_q : torch.Tensor of shape [n_task, q_shot] :
         """
-        preds_q = self.p.argmax(2)
+        preds_q = self.p.argmax(-1)
         n_tasks, q_shot = preds_q.size()
         self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
@@ -156,45 +119,14 @@ class KM(object):
 
         return logs
 
-class KM_UNBIASED(KM):
+
+class KM_UNBIASED_GD(KM):
     def __init__(self, model, device, log_file, args):
         super().__init__(model=model, device=device, log_file=log_file, args=args)
+        self.lr = args.lr
 
     def __del__(self):
         self.logger.del_logger()
-
-    def p_update(self, query):
-        """
-        inputs:
-            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
-        """
-        
-        q_shot = query.size(1)
-        u = - 1 / 2 * self.get_logits(query).detach()
-        self.p = (u + self.alpha * self.A_adj(self.v, q_shot)).softmax(2)
-
-    def v_update(self):
-        """
-        inputs:
-        """
-        self.v = torch.log(self.A(self.p) + 1e-6) + 1
-
-    def weights_update(self, support, query, y_s_one_hot):
-        """
-        Corresponds to w_k updates
-        inputs:
-            support : torch.Tensor of shape [n_task, s_shot, feature_dim]
-            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
-            y_s_one_hot : torch.Tensor of shape [n_task, s_shot, num_classes]
-
-
-        updates :
-            self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
-        """
-        num = torch.einsum('bkq,bqd->bkd',torch.transpose(self.p, 1, 2), query) \
-                                                + torch.einsum('bkq,bqd->bkd',torch.transpose(y_s_one_hot, 1, 2), support)
-        den  = self.p.sum(1) + y_s_one_hot.sum(1)
-        self.weights = torch.div(num, den.unsqueeze(2))
 
     def run_adaptation(self, support, query, y_s, y_q, shot):
         """
@@ -212,19 +144,83 @@ class KM_UNBIASED(KM):
         self.logger.info(" ==> Executing KM-UNBIASED with LAMBDA = {}".format(self.alpha))
         
         t0 = time.time()
-        y_s_one_hot = get_one_hot(y_s)
+        y_s_one_hot = F.one_hot(y_s, self.num_classes)
         n_task, num_classes = y_s_one_hot.size(0), y_s_one_hot.size(2)
-        self.v = torch.zeros(n_task, num_classes).to(self.device)
+        n_query = query.size(1)
+
+        # Initialize p
+        self.p = self.get_logits(query).softmax(-1)
+
+        self.p.requires_grad_()
+        self.weights.requires_grad_()
+        optimizer = torch.optim.SGD([self.weights, self.p], lr=self.lr)
+
+        all_samples = torch.cat([support, query], 1)
 
         for i in tqdm(range(self.iter)):
-            self.p_update(query)
-            self.v_update()
-            self.weights_update(support, query, y_s_one_hot)
+            t1 = time.time()
+            self.record_info(new_time=t1-t0, y_q=y_q)
+            t0 = time.time()
 
-        t1 = time.time()
-        self.record_info(new_time=t1-t0, y_q=y_q)
-        t0 = time.time()
-        
+            # Data fitting term
+            l2_distances = torch.cdist(all_samples, self.weights) ** 2  # [n_tasks, ns + nq, K]
+            all_p = torch.cat([y_s_one_hot, self.p], dim=1) # [n_tasks, ns + nq, K]
+            data_fitting = 1/2 * (l2_distances * all_p).mean((-2, -1)).sum(0)
+
+            # Complexity term
+            marg_p = self.p.mean(1)  # [n_tasks, K]
+            marg_ent = - (marg_p * torch.log(marg_p + 1e-12)).sum(-1).sum(0)  # [n_tasks]
+
+            loss = data_fitting - self.alpha * marg_ent
+
+            # Gradient step
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            print(loss)
+
+            # Projection
+            with torch.no_grad():
+                # self.p = self.simplex_project(self.p)
+                self.p = self.p.softmax(-1)
+        delattr(self, 'p')
+        delattr(self, 'weights')
+
+    def simplex_project(self, p: torch.Tensor, l=1.0):
+        """
+        Taken from https://www.researchgate.net/publication/283568278_NumPy_SciPy_Recipes_for_Data_Science_Computing_Nearest_Neighbors
+        p: [n_tasks, n_q, K]
+        """
+
+        # Put in the right form for the function
+        matX = p.permute(0, 2, 1).cpu().numpy()
+
+        # Core function
+        n_tasks, m, n = matX.shape
+        # matS = np.sort(matX, axis=0)[::-1]
+        matS = - np.sort(-matX, axis=1)
+        matC = np.cumsum(matS, axis=1) - l
+        matH = matS - matC / (np.arange(m) + 1).reshape(1, m, 1)
+        matH[matH <= 0] = np.inf
+
+        r = np.argmin(matH, axis=1)
+        t = []
+        for task in range(n_tasks):
+            t.append(matC[task, r[task], np.arange(n)] / (r[task] + 1))
+        t = np.stack(t, 0)
+        matY = matX - t[:, None, :]
+        matY[matY < 0] = 0
+
+        # Back to torch
+        matY = torch.from_numpy(matY).permute(0, 2, 1).to(self.device)
+
+        assert torch.allclose(matY.sum(-1), torch.ones_like(matY.sum(-1))), \
+            "Simplex constraint does not seem satisfied"
+
+        return matY
+      
+
 class MinMaxScaler(object):
     """MinMax Scaler
 
@@ -254,7 +250,7 @@ class MinMaxScaler(object):
         """
 
         dist = (query.max(dim=1, keepdim=True)[0] - query.min(dim=1, keepdim=True)[0])
-        dist[dist==0.] = 1.
+        dist[dist == 0.] = 1.
         scale = 1.0 /  dist
         ratio = query.min(dim=1, keepdim=True)[0]
         query.mul_(scale).sub_(ratio)

@@ -2,6 +2,7 @@ import numpy as np
 from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features_simple
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.km_unbiased import KM_UNBIASED
+from src.methods.km_unbiased_GD import KM_UNBIASED_GD
 from src.methods.km import KM_BIASED
 from src.methods.ici import ICI
 from src.methods.laplacianshot import LaplacianShot
@@ -15,6 +16,8 @@ import os
 from src.utils import load_pickle, save_pickle
 import random
 from tqdm import tqdm
+
+
 class Evaluator:
     def __init__(self, device, args, log_file):
         self.device = device
@@ -278,6 +281,8 @@ class Evaluator:
             method_builder = ALPHA_TIM(**method_info)
         elif self.args.method == 'KM-UNBIASED':
             method_builder = KM_UNBIASED(**method_info)
+        elif self.args.method == 'KM-UNBIASED-GD':
+            method_builder = KM_UNBIASED_GD(**method_info)
         elif self.args.method == 'KM-BIASED':
             method_builder = KM_BIASED(**method_info)
         elif self.args.method == 'TIM-GD':
