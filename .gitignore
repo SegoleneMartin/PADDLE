@@ -9,3 +9,4 @@ exemple_sampler_data
 *.sublime-workspace
 *.DS_Store
 logs
+results_test
