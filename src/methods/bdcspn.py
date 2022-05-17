@@ -44,8 +44,7 @@ class BDCSPN(object):
         preds_q = torch.from_numpy(preds_q)
         y_q = torch.from_numpy(y_q)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
-        print('y_q', y_q)
-        print("preds_q", preds_q)
+
         self.test_acc.append(accuracy)
         union = list(range(self.num_classes))
         for i in range(n_tasks):
@@ -107,6 +106,8 @@ class BDCSPN(object):
         for j in tqdm(range(self.number_tasks)):
             distance = get_metric('cosine')(init_prototypes[j], query_aug[j])
             predict = torch.argmin(distance, dim=1)
+            if self.dataset == 'inatural' and self.used_set_support == 'repr':
+                predict = y_s[j][predict]
             cos_sim = F.cosine_similarity(query_aug[j][:, None, :], init_prototypes[j][None, :, :], dim=2)  # Cosine similarity between X' and Pn
             cos_sim = self.temp * cos_sim
             W = F.softmax(cos_sim, dim=1)
@@ -144,7 +145,6 @@ class BDCSPN(object):
         support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
         query = query.numpy()
         y_q = y_q.numpy()
-        print("support shape", support.shape)
         
             
         # support = torch.from_numpy(support)

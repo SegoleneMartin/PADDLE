@@ -36,11 +36,8 @@ class PT_MAP(object):
         self.test_acc = []
         self.test_F1 = []
 
-    def getAccuracy(self, preds_q, y_q):
-        print('y_q', y_q)
-        
+    def getAccuracy(self, preds_q, y_q):        
         preds_q = preds_q.argmax(dim=2)
-        print('preds', preds_q)
 
         acc_test = (preds_q == y_q).float().mean(1, keepdim=True)
 
@@ -112,7 +109,6 @@ class PT_MAP(object):
         model.updateFromEstimate(m_estimates, self.alpha)
 
     def run_adaptation(self, model, data, y_s, y_q, shot):
-        print("data size", data.size())
         _, preds_q = model.getProbas(data=data, y_s=y_s, n_tasks=self.number_tasks, n_sum_query=self.n_sum_query,
                                           n_queries=self.n_queries, shot=shot)
 
@@ -136,8 +132,6 @@ class PT_MAP(object):
         """
 
         preds_q = preds_q.argmax(dim=2)
-        print('y_q', y_q)
-        print('preds', preds_q)
         n_tasks, q_shot = preds_q.size()
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
         self.timestamps.append(new_time)
@@ -197,8 +191,6 @@ class PT_MAP(object):
             y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
 
-        print('y_s', y_s)
-            
 
         gaus_model = self.get_GaussianModel()
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,
