@@ -40,7 +40,7 @@ DATA:
 
 EVAL:
     evaluate: True      # Set to True to evaluate methods
-    number_tasks: 1000 # Number of tasks to evaluate
+    number_tasks: 10000 # Number of tasks to evaluate
     batch_size: 100
     n_ways : 5
     num_classes_test : 160
@@ -49,10 +49,11 @@ EVAL:
     alpha_dirichlet: 1
     model_tag: 'best'
     plt_metrics: ['accs']
-    shots: [5]
+    shots: [5, 10, 20]
     fresh_start: False
-    used_set_support: 'val'
-    used_set_query: 'val'
+    used_set_support: 'test'
+    used_set_query: 'test'
+    convergence_ablation: False
     
 
 DISTRIBUTED:

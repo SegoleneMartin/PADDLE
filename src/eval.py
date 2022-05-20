@@ -16,7 +16,7 @@ import os
 from src.utils import load_pickle, save_pickle
 import random
 from tqdm import tqdm
-
+import pickle
 
 class Evaluator:
     def __init__(self, device, args, log_file):
@@ -48,15 +48,14 @@ class Evaluator:
         support = []
         y_s = []
         for i in range(len(support_set)):
-        #for i in range(4):
-                print("i = ", i)
-                sampler = SamplerBasic(i)
-                test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
-                                             sampler=sampler, pin_memory=False)
-                for (data_support, labels_support, _) in test_loader_support:
-                    features_support = get_features_simple(model, data_support)
-                    support.append(features_support)
-                    y_s.append(labels_support)
+            print("i = ", i)
+            sampler = SamplerBasic(i)
+            test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
+                                                 sampler=sampler, pin_memory=False)
+            for (data_support, labels_support, _) in test_loader_support:
+                features_support = get_features_simple(model, data_support)
+                support.append(features_support)
+                y_s.append(labels_support)
               
         support = torch.stack(support).squeeze(1)
         y_s = torch.cat(y_s)
@@ -216,12 +215,42 @@ class Evaluator:
                 acc_mean, acc_conf = compute_confidence_interval(logs['acc'][:, -1])
                 F1_mean, F1_conf = compute_confidence_interval(logs['F1'][:, -1])
 
+                if self.args.convergence_ablation:
+                    times_mean = logs['time']
+                    times_std = 0.
+                    if 'criterion' in logs:
+                        criterion_mean, criterion_std = compute_confidence_interval(logs['criterion'], axis=0)
+                    full_acc_mean, full_acc_std = compute_confidence_interval(logs['acc'], axis=0)
+                    print(times_mean)
+
                 results_task.append(acc_mean)
                 results_task_F1.append(F1_mean)
                 del method
                 del tasks
             results.append(results_task)
             results_F1.append(results_task_F1)
+
+            if self.args.convergence_ablation:
+                root_file = os.path.join('results_ablation', self.args.dataset, self.args.arch)
+            else:
+                root_file = os.path.join('results_test', self.args.dataset, self.args.arch)
+
+            os.makedirs(root_file, exist_ok=True)
+            # Saving convergence to files for plotting
+            if self.args.convergence_ablation:
+                for arr_name in ['criterion', 'times', 'full_acc']:
+                    if f"{arr_name}_mean" in locals():
+                        array_mean = eval(f"{arr_name}_mean")
+                        array_std = eval(f"{arr_name}_std")
+                        obj = {'mean': array_mean, 'std': array_std}
+                        method_dir = os.path.join(root_file, self.args.method)
+                        os.makedirs(method_dir, exist_ok=True)
+                        filename = os.path.join(method_dir, f"{arr_name}_{shot}.pkl")
+                        with open(filename, 'wb') as f:
+                            pickle.dump(obj, f)
+                        self.logger.info(f"Saved file at {filename}")
+                    else:
+                        self.logger.warning(f"{arr_name} variable not defined")
 
         mean_accuracies = np.asarray(results).mean(1)
         mean_F1s = np.asarray(results_F1).mean(1)
@@ -258,10 +287,12 @@ class Evaluator:
                 
             f.write(str(self.args.n_ways)+'\t')
             #f.write(str(param)+'\t')
-            self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
-                                                                                   mean_accuracies[self.args.shots.index(shot)]))
-            self.logger.info('{}-shot mean F1 score over {} tasks: {}'.format(shot, self.args.number_tasks,
-                                                                                   mean_F1s[self.args.shots.index(shot)]))
+            self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.
+                             format(shot, self.args.number_tasks,
+                                    mean_accuracies[self.args.shots.index(shot)]))
+            self.logger.info('{}-shot mean F1 score over {} tasks: {}'.
+                             format(shot, self.args.number_tasks, 
+                                    mean_F1s[self.args.shots.index(shot)]))
             f.write(str(round(100*mean_accuracies[self.args.shots.index(shot)], 1)) +'\t' )
             f.write(str(round(100*mean_F1s[self.args.shots.index(shot)], 1)) +'\t' )
             f.write('\n')

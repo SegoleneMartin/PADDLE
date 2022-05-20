@@ -7,6 +7,7 @@ import torch
 import time
 import numpy as np
 from sklearn.metrics import f1_score
+from copy import deepcopy
 
 class TIM(object):
     def __init__(self, model, device, log_file, args):
@@ -34,6 +35,7 @@ class TIM(object):
         self.test_acc = []
         self.losses = []
         self.test_F1 = []
+        self.criterions = []
     
     def get_logits(self, samples):
         """
@@ -110,7 +112,7 @@ class TIM(object):
             self.loss_weights[0] = (1 + self.loss_weights[2]) * self.N_s / self.N_q
 
 
-    def record_info(self, new_time, support, query, y_s, y_q):
+    def record_info(self, new_time, support, query, y_s, y_q, criterions=None):
         """
         inputs:
             support : torch.Tensor of shape [n_task, s_shot, feature_dim]
@@ -136,6 +138,11 @@ class TIM(object):
         self.mutual_infos.append(get_mi(probs=q_probs))
         self.entropy.append(get_entropy(probs=q_probs.detach()))
         self.cond_entropy.append(get_cond_entropy(probs=q_probs.detach()))
+        if criterions is None:
+            self.criterions.append(torch.ones(n_tasks).to(self.device))
+        else:
+            self.criterions.append(criterions)
+
 
     def get_logs(self):
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
@@ -143,9 +150,11 @@ class TIM(object):
         self.cond_entropy = torch.cat(self.cond_entropy, dim=1).cpu().numpy()
         self.entropy = torch.cat(self.entropy, dim=1).cpu().numpy()
         self.mutual_infos = torch.cat(self.mutual_infos, dim=1).cpu().numpy()
-        return {'timestamps': self.timestamps, 'mutual_info': self.mutual_infos,
+        criterions = torch.stack(self.criterions, 1).cpu().numpy()  # [n_tasks, n_iter]
+        return {'time': self.timestamps, 'mutual_info': self.mutual_infos,
                 'entropy': self.entropy, 'cond_entropy': self.cond_entropy,
-                'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1}
+                'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1,
+                'criterion': criterions}
 
     def run_adaptation(self, support, query, y_s, y_q):
         """
@@ -241,11 +250,11 @@ class TIM_GD(TIM):
             
             self.model.train()
             t0 = time.time()
-        self.record_info(new_time=t1-t0,
-                             support=support,
-                             query=query,
-                             y_s=y_s,
-                             y_q=y_q)
+            self.record_info(new_time=t1-t0,
+                                 support=support,
+                                 query=query,
+                                 y_s=y_s,
+                                 y_q=y_q)
 
 class ALPHA_TIM(TIM):
     def __init__(self, model, device, log_file, args):
@@ -285,7 +294,15 @@ class ALPHA_TIM(TIM):
         y_s_one_hot = get_one_hot(y_s)
         self.model.train()
 
+
+        self.record_info(new_time=0.,
+                         support=support,
+                         query=query,
+                         y_s=y_s,
+                         y_q=y_q)
+        t0 = time.time()
         for i in tqdm(range(self.iter)):
+            weights_old = deepcopy(self.weights.detach())
             logits_s = self.get_logits(support)
             logits_q = self.get_logits(query)
 
@@ -323,14 +340,14 @@ class ALPHA_TIM(TIM):
             loss.backward()
             optimizer.step()
 
-            t1 = time.time()
-            self.model.eval()
-
-            self.model.train()
-            t0 = time.time()
-        self.record_info(new_time=t1-t0,
-                             support=support,
-                             query=query,
-                             y_s=y_s,
-                             y_q=y_q)
+            with torch.no_grad():
+                t1 = time.time()
+                criterions = (weights_old - self.weights).norm(dim=-1).mean(-1)  # [n_tasks, K, d]
+                self.record_info(new_time=t1-t0,
+                                 support=support,
+                                 query=query,
+                                 y_s=y_s,
+                                 y_q=y_q,
+                                 criterions=criterions)
+                t0 = time.time()
 

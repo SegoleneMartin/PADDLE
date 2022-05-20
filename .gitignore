@@ -1,6 +1,6 @@
 *.zip
 *.pt
-data
+data/
 checkpoints
 copie
 plots

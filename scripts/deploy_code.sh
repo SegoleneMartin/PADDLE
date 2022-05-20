@@ -9,6 +9,10 @@ SERVER_PATH="/ssd/repos/Few-Shot-Classification/sego"
 rsync -av  \
   --exclude .git \
   --exclude logs \
+  --exclude data \
+  --exclude results_test \
+  --exclude results_test_old \
+  --exclude results_ablation \
   --exclude archive \
   --exclude checkpoints \
   --exclude *.tar \
