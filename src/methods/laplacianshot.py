@@ -61,8 +61,8 @@ class LaplacianShot(object):
         self.timestamps.append(new_time)
 
     def get_logs(self):
-        self.test_acc = np.array([self.test_acc])
-        #self.test_acc = torch.stack(self.test_acc, dim=0).squeeze(2).cpu().numpy()
+        #self.test_acc = np.array([self.test_acc])
+        self.test_acc = torch.stack(self.test_acc, dim=0).squeeze(2).cpu().numpy()
         self.test_F1 = np.array([self.test_F1])
         self.ent_energy = np.array(self.ent_energy)
         self.timestamps = np.array(self.timestamps).sum(0)
@@ -175,6 +175,8 @@ class LaplacianShot(object):
 
         return E
 
+    
+    
     def bound_update(self, unary, kernel, bound_lambda, y_s, y_q, task_i, bound_iteration=20, batch=False):
         oldE = float('inf')
         Y = self.normalize(-unary)
@@ -193,14 +195,17 @@ class LaplacianShot(object):
             E_list.append(E)
             # print('entropy_energy is ' +repr(E) + ' at iteration ',i)
             l = np.argmax(Y, axis=1)
-            if self.dataset == 'inatural' and self.used_set_support == 'repr':
-                out = l
-            else:
-                out = np.take(y_s, l)
+            #out = np.take(y_s, l)
+            out = l
             timestamps.append(time.time()-t0)
 
             if (i > 1 and (abs(E - oldE) <= 1e-6 * abs(oldE))):
+                # print('Converged')
+                out_list.append(torch.from_numpy(out))
+                acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
                 for j in range(bound_iteration-i-1):
+                    out_list.append(out_list[i].detach().clone())
+                    acc_list.append(acc_list[i].detach().clone())
                     E_list.append(E_list[i])
                     timestamps.append(0)
                 break
@@ -208,16 +213,15 @@ class LaplacianShot(object):
             else:
                 oldE = E.copy()
 
-                #out_list.append(torch.from_numpy(out))
-                #acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
+                out_list.append(torch.from_numpy(out))
+                acc_list.append((torch.from_numpy(y_q[task_i]) == torch.from_numpy(out)).float())
             t0 = time.time()
-        #out_list.append(out)
-        #acc = (y_q[task_i] == out).float().mean()
-        #out_list = torch.cat(out_list, dim=0)
-        #acc_list = torch.stack(acc_list, dim=0).mean(dim=1, keepdim=True)
 
-        return out, E_list, timestamps
+        out_list = torch.stack(out_list, dim=0)
+        acc_list = torch.stack(acc_list, dim=0).mean(dim=1, keepdim=True)
 
+        return out, acc_list, E_list, timestamps
+    
     def get_tuned_lmd(self):
         """"
         Returns tuned lambda values for [1-shot, 5-shot] tasks
@@ -250,59 +254,25 @@ class LaplacianShot(object):
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
         train_mean = task_dic['train_mean']
 
-        if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            # use precomputed features of the support set
-            
-            # Extract features
-            # support, query = extract_features(self.model, x_s, x_q)
-            # support = torch.load('features_support.pt').to(self.device)
-            # support = support.unsqueeze(0)
-            # y_s = torch.load('labels_support.pt').to(self.device)
-            # y_s = y_s.unsqueeze(0)
+        # Extract features
+        support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
+        y_s = y_s.squeeze(2).to(self.device)
+        y_q = y_q.squeeze(2).to(self.device)
+        support = support.to(self.device)
+        query = query.to(self.device)
 
-            # Perform normalizations required
-            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
-            y_s = y_s.squeeze(2).to(self.device)
-            y_q = y_q.squeeze(2).to(self.device)
-            #support = x_s
-            #query = x_q
-            
-            #support = F.normalize(support, dim=2)
-            #query = F.normalize(query, dim=2)
-            support = support.to(self.device)
-            query = query.to(self.device)
-
-            if self.proto_rect:
-                self.logger.info(" ==> Executing proto-rectification ...")
-                support = self.proto_rectification(support=support, query=query, shot=shot)
-            else:
-                #support = support.reshape(self.number_tasks, shot, self.n_ways, support.shape[-1]).mean(1)
-                one_hot = get_one_hot(y_s)
-                counts = one_hot.sum(1).view(support.size()[0], -1, 1)
-                weights = one_hot.transpose(1, 2).matmul(support)
-                support = weights / counts
-
-            support = support.cpu().numpy()
-            query = query.cpu().numpy()
-            y_s = y_s.cpu().numpy()
-            y_q = y_q.cpu().numpy()
-            
+        if self.proto_rect:
+            self.logger.info(" ==> Executing proto-rectification ...")
+            support = self.proto_rectification(support=support, query=query, shot=shot)
         else:
-            # Extract features
-            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
-
-            # Perform normalizations required
-            support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
-
-            support = support.numpy()
-            query = query.numpy()
-            y_q = y_q.numpy().squeeze(2)
-
-            if self.proto_rect:
-                self.logger.info(" ==> Executing proto-rectification ...")
-                support = self.proto_rectification(support=support, query=query, shot=shot)
-            else:
-                support = support.reshape(self.number_tasks, shot, self.num_classes, support.shape[-1]).mean(1)
+            one_hot = get_one_hot(y_s)
+            counts = one_hot.sum(1).view(support.size()[0], -1, 1)
+            weights = one_hot.transpose(1, 2).matmul(support)
+            support = weights / counts
+        support = support.cpu().numpy()
+        query = query.cpu().numpy()
+        y_s = y_s.cpu().numpy()
+        y_q = y_q.cpu().numpy()
 
         # Run adaptation
         self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
@@ -328,7 +298,6 @@ class LaplacianShot(object):
         if self.lmd is None:
             lmd = 1
         else:
-            #lmd = self.get_lmd(shot)
             lmd = self.lmd[0]
         self.logger.info(" ==> Executing {}-shot predictions with lmd = {} ...".format(shot, lmd))
         for i in tqdm(range(self.number_tasks)):
@@ -337,18 +306,12 @@ class LaplacianShot(object):
             distance = LA.norm(substract, 2, axis=-1)
             unary = distance.transpose() ** 2
             W = self.create_affinity(query[i])
-            if self.dataset == 'inatural' and self.used_set_support == 'repr':
-                y_s_i = np.unique(y_s[i])
-            else:
-                y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
-            preds, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s_i, y_q=y_q, task_i=i,
+            preds, acc_list, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s, y_q=y_q, task_i=i,
                                                 bound_iteration=self.iter)
-            q_shot = len(preds)
 
+            q_shot = len(preds)
             ground_truth = list(y_q[i].reshape(q_shot))
-            #preds = list(preds.reshape(q_shot))
-            acc = (y_q[i].reshape(q_shot) == preds).mean()
             union = list(range(self.num_classes))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.record_info(acc=acc, f1=f1, ent_energy=ent_energy, new_time=times)
-            union = list(range(self.num_classes))
+
+            self.record_info(acc=acc_list, f1=f1, ent_energy=ent_energy, new_time=times)

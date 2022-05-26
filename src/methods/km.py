@@ -64,7 +64,6 @@ class KM(object):
         updates :
             self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
         """
-        self.model.eval()
         t0 = time.time()
         n_tasks = support.size(0)
         one_hot = get_one_hot(y_s).to(self.device)
@@ -78,7 +77,6 @@ class KM(object):
                          y_s=y_s,
                          y_q=y_q)
         """
-        self.model.train()
 
 
     def record_info(self, new_time, support, query, y_s, y_q):
@@ -99,7 +97,6 @@ class KM(object):
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            #union = set.union(set(ground_truth),set(preds))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
 
@@ -141,7 +138,6 @@ class KM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        #support, query = extract_features(self.model, support, query)
         support = support.to(self.device)
         query = query.to(self.device)
         
@@ -207,10 +203,8 @@ class KM_BIASED(KM):
         updates :
             self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
         """
-        #self.logger.info(" ==> Executing KM-UNBIASED adaptation over {} iterations on {} shot tasks ...".format(self.iter, shot))
         t0 = time.time()
         y_s_one_hot = get_one_hot(y_s).to(self.device)
-        self.weights.requires_grad_()
 
         for i in tqdm(range(self.iter)):
             self.p_update(query)

@@ -8,15 +8,12 @@ import time
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
-from loguru import logger
-from copy import deepcopy
 
 class KM(object):
     def __init__(self, model, device, log_file, args):
         self.device = device
         self.iter = args.iter
         self.alpha = args.alpha
-        #self.alpha = 75
         self.tau = args.tau
         self.model = model
         self.log_file = log_file
@@ -29,7 +26,6 @@ class KM(object):
         self.test_acc = []
         self.losses = []
         self.test_F1 = []
-        self.criterions = []
 
     def get_logits(self, samples):
         """
@@ -43,7 +39,7 @@ class KM(object):
         logits = (- 2 * samples.matmul(self.weights.transpose(1, 2)) \
                               + (self.weights**2).sum(2).view(n_tasks, 1, -1) \
                               + (samples**2).sum(2).view(n_tasks, -1, 1))  #
-        return 1/2 * logits
+        return logits
 
     def A(self, p):
         """
@@ -99,14 +95,14 @@ class KM(object):
         weights = one_hot.transpose(1, 2).matmul(support)
         self.weights = weights / counts
 
-    def record_info(self, new_time, y_q, criterions):
+    
+    def record_info(self, new_time, y_q):
         """
         inputs:
             support : torch.Tensor of shape [n_task, s_shot, feature_dim]
             query : torch.Tensor of shape [n_task, q_shot, feature_dim]
             y_s : torch.Tensor of shape [n_task, s_shot]
-            y_q : torch.Tensor of shape [n_task, q_shot]
-            criterion: [n_tasks]
+            y_q : torch.Tensor of shape [n_task, q_shot] :
         """
         preds_q = self.p.argmax(2)
         n_tasks, q_shot = preds_q.size()
@@ -114,23 +110,16 @@ class KM(object):
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
         union = list(range(self.num_classes))
-        if criterions is None:
-            self.criterions.append(torch.ones(n_tasks).to(self.device))
-        else:
-            self.criterions.append(criterions)
-
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            #union = set.union(set(ground_truth),set(preds))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
 
     def get_logs(self):
         self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
-        criterions = torch.stack(self.criterions, 1).cpu().numpy()  # [n_tasks, n_iter]
-        return {'time': self.timestamps, 'criterion': criterions,
+        return {'timestamps': self.timestamps,
                 'acc': self.test_acc, 'F1': self.test_F1, 'losses': self.losses}
 
     def run_task(self, task_dic, shot):
@@ -146,7 +135,6 @@ class KM(object):
         y_q = y_q.long().squeeze(2).to(self.device)
 
         # Extract features
-        #support, query = extract_features(self.model, support, query)
         support = support.to(self.device)
         query = query.to(self.device)
 
@@ -165,7 +153,6 @@ class KM(object):
 
         return logs
 
-
 class KM_UNBIASED(KM):
     def __init__(self, model, device, log_file, args):
         super().__init__(model=model, device=device, log_file=log_file, args=args)
@@ -180,7 +167,7 @@ class KM_UNBIASED(KM):
         """
         
         q_shot = query.size(1)
-        u = - self.get_logits(query).detach()
+        u = - 1 / 2 * self.get_logits(query).detach()
         self.p = (u + self.alpha * self.A_adj(self.v, q_shot)).softmax(2)
 
     def v_update(self):
@@ -221,28 +208,20 @@ class KM_UNBIASED(KM):
         """
         self.logger.info(" ==> Executing KM-UNBIASED with LAMBDA = {}".format(self.alpha))
         
+        t0 = time.time()
         y_s_one_hot = get_one_hot(y_s)
         n_task, num_classes = y_s_one_hot.size(0), y_s_one_hot.size(2)
         self.v = torch.zeros(n_task, num_classes).to(self.device)
-        self.p = (- self.get_logits(query)).softmax(-1)  # only for plotting
-        self.record_info(new_time=0., y_q=y_q, criterions=None)
-        t0 = time.time()
 
         for i in tqdm(range(self.iter)):
-
-            weights_old = deepcopy(self.weights.detach())
-
             self.p_update(query)
             self.v_update()
             self.weights_update(support, query, y_s_one_hot)
 
-            with torch.no_grad():
-                t1 = time.time()
-                criterions = (weights_old - self.weights).norm(dim=-1).mean(-1)  # [n_tasks, K, d]
-                self.record_info(new_time=t1-t0, y_q=y_q, criterions=criterions)
-                t0 = time.time()
+        t1 = time.time()
+        self.record_info(new_time=t1-t0, y_q=y_q)
+        t0 = time.time()
         
-
 class MinMaxScaler(object):
     """MinMax Scaler
 

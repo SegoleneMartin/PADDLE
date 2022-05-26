@@ -32,13 +32,6 @@ class ICI(object):
         self.elasticnet = ElasticNet(alpha=1.0, l1_ratio=1.0, fit_intercept=True, normalize=True, warm_start=True, selection="cyclic")
         self.dataset = args.dataset
         self.used_set_support = args.used_set_support
-        #if self.max_iter == "auto":
-            # set a big number
-        #    self.max_iter = num_support + num_unlabel
-        #elif self.max_iter == "fix":
-            #self.max_iter = math.ceil(num_unlabel / self.step)
-        #else:
-            #assert float(self.max_iter).is_integer()
 
     def init_info_lists(self):
         self.timestamps = []
@@ -59,7 +52,6 @@ class ICI(object):
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            #union = set.union(set(ground_truth),set(preds))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
 
@@ -75,27 +67,14 @@ class ICI(object):
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
 
-        if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            # Extract features
-            support, query = extract_features(self.model, x_s, x_q)
-            support = torch.load('features_support.pt').to(self.device)
-            support = support.unsqueeze(0)
-            y_s = torch.load('labels_support.pt').to(self.device)
-            y_s = y_s.unsqueeze(0)
-            y_q = y_q.long().squeeze(2).to(self.device)
-            query = query.to(self.device)
-            
-        else:
-            # Transfer tensors to GPU if needed
-            support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
-            query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
-            y_s = y_s.long().squeeze(2).to(self.device)
-            y_q = y_q.long().squeeze(2).to(self.device)
+        support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
+        query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
+        y_s = y_s.long().squeeze(2).to(self.device)
+        y_q = y_q.long().squeeze(2).to(self.device)
 
-            # Extract features
-            #support, query = extract_features(self.model, support, query)
-            support = support.to(self.device)
-            query = query.to(self.device)
+        # Extract features
+        support = support.to(self.device)
+        query = query.to(self.device)
 
         # Perform normalizations required
         support = F.normalize(support, dim=2)

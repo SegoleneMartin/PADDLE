@@ -19,13 +19,13 @@ class KM_UNBIASED_GD(KM):
         self.device = device
         self.iter = args.iter
         self.alpha = args.alpha
-        #self.alpha = 75
         self.lr = args.lr
         self.model = model
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.num_classes = args.num_classes_test
+        self.criterions = []
 
     def run_adaptation(self, support, query, y_s, y_q, shot):
         """
@@ -35,8 +35,6 @@ class KM_UNBIASED_GD(KM):
             query : torch.Tensor of shape [n_task, q_shot, feature_dim]
             y_s : torch.Tensor of shape [n_task, s_shot]
             y_q : torch.Tensor of shape [n_task, q_shot]
-
-
         updates :
             self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
         """
@@ -65,7 +63,7 @@ class KM_UNBIASED_GD(KM):
             weights_old = deepcopy(self.weights.detach())
             # Data fitting term
             l2_distances = torch.cdist(all_samples, self.weights) ** 2  # [n_tasks, ns + nq, K]
-            all_p = torch.cat([y_s_one_hot, self.p], dim=1) # [n_task s, ns + nq, K]
+            all_p = torch.cat([y_s_one_hot.float(), self.p.float()], dim=1) # [n_task s, ns + nq, K]
             data_fitting = 1/2 * (l2_distances * all_p).sum((-2, -1)).sum(0)
 
             # Complexity term
@@ -122,7 +120,7 @@ class KM_UNBIASED_GD(KM):
         """
 
         # Put in the right form for the function
-        matX = p.permute(0, 2, 1).cpu().numpy()
+        matX = p.permute(0, 2, 1).detach().cpu().numpy()
 
         # Core function
         n_tasks, m, n = matX.shape
@@ -151,9 +149,7 @@ class KM_UNBIASED_GD(KM):
 
 class MinMaxScaler(object):
     """MinMax Scaler
-
     Transforms each channel to the range [a, b].
-
     Parameters
     ----------
     feature_range : tuple
@@ -165,12 +161,10 @@ class MinMaxScaler(object):
 
     def __call__(self, query, support):
         """Fit features
-
         Parameters
         ----------
         stacked_features : tuple, list
             List of stacked features.
-
         Returns
         -------
         tensor 

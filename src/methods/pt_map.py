@@ -46,11 +46,7 @@ class PT_MAP(object):
         return m, pm
 
     def get_GaussianModel(self):
-        if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            imbalanced_support = True
-        else:
-            imbalanced_support = False
-        method_info = {'device': self.device, 'lam': self.lam, 'num_classes_test': self.num_classes, 'n_ways': self.n_ways, 'imbalanced_support': imbalanced_support}
+        method_info = {'device': self.device, 'lam': self.lam, 'num_classes_test': self.num_classes, 'n_ways': self.n_ways}
         return GaussianModel(**method_info)
 
     def power_transform(self, support, query):
@@ -154,28 +150,10 @@ class PT_MAP(object):
         # Extract support and query
         y_s, y_q = task_dic['y_s'], task_dic['y_q']
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
-        if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            # Extract features
-            #support, query = extract_features(self.model, x_s, x_q)
-            #support = torch.load('features_support.pt').to(self.device)
-            #support = support.unsqueeze(0)
-            #y_s = torch.load('labels_support.pt').to(self.device)
-            #y_s = y_s.unsqueeze(0)
-            support = x_s.to(self.device)
-            query = x_q.to(self.device)
-            y_s = y_s.long().squeeze(2).to(self.device)
-            y_q = y_q.long().squeeze(2).to(self.device)
-            self.logger.info(' ==> Executing initial data transformation ...')
-            # Power transform
-            support, query = self.power_transform(support=support, query=query)
-
-        else:
-            # Extract features
-            #z_s, z_q = extract_features(model=self.model, support=x_s, query=x_q)
-
-            self.logger.info(' ==> Executing initial data transformation ...')
-            # Power transform
-            support, query = self.power_transform(support=x_s, query=x_q)
+     
+        self.logger.info(' ==> Executing initial data transformation ...')
+        # Power transform
+        support, query = self.power_transform(support=x_s, query=x_q)
 
         data = torch.cat((support, query), dim=1)
         data = self.QRreduction(data)

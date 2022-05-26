@@ -2,5 +2,5 @@ METHOD:
   method: 'PT-MAP'
   beta: 0.5
   lam: 10
-  alpha: 0.2
+  alpha: 0.008
   n_epochs: 20

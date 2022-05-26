@@ -126,14 +126,7 @@ class BDCSPN(object):
         x_s, x_q = task_dic['x_s'], task_dic['x_q']
         train_mean = task_dic['train_mean']
 
-        
-
         # Extract features
-        # support, query = extract_features(self.model, x_s, x_q)
-        # support = torch.load('features_support.pt').to('cpu')
-        # support = support.unsqueeze(0)
-        # y_s = torch.load('labels_support.pt').to('cpu')
-        # y_s = y_s.unsqueeze(0)
         support, query = self.normalization(z_s=x_s, z_q=x_q, train_mean=train_mean)
         support = x_s.to(self.device)
         query = x_q.to(self.device)
@@ -144,12 +137,7 @@ class BDCSPN(object):
         support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
         query = query.numpy()
         y_q = y_q.numpy()
-        
-            
-        # support = torch.from_numpy(support)
-        # query = torch.from_numpy(query)
-        # y_s = torch.from_numpy(y_s)
-        # y_q = torch.from_numpy(y_q)
+
         # Run adaptation
         self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
@@ -172,11 +160,6 @@ class BDCSPN(object):
         out_list = []
         for i in tqdm(range(self.number_tasks)):
             y_s_i = np.unique(y_s[i])
-            # if self.dataset == 'inatural' and self.used_set_support == 'repr':
-            #     y_s_i = np.unique(y_s[i])
-            # else:
-            #     y_s_i = y_s.numpy()[i, :self.num_classes]
-            #     print(y_s_i)
             substract = support[i][:, None, :] - query[i]
             distance = LA.norm(substract, 2, axis=-1)
             idx = np.argpartition(distance, self.num_NN, axis=0)[:self.num_NN]

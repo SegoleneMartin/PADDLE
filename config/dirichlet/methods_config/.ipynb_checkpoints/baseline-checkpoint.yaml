@@ -1,5 +1,0 @@
-METHOD:
-  method: 'Baseline'
-  temp: 15
-  lr_baseline: 1e-3
-  iter: 100

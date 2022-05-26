@@ -136,17 +136,20 @@ class Baseline(object):
         # Record info if there's no Baseline iteration
         if self.iter == 0:
             t1 = time.time()
+            self.model.eval()
             self.record_info(new_time=t1 - t0,
                              support=support,
                              query=query,
                              y_s=y_s,
                              y_q=y_q)
+            self.model.train()
         else:
             self.logger.info(" ==> Executing Baseline adaptation over {} iterations on {} shot tasks...".format(self.iter, shot))
 
         self.weights.requires_grad_()
         optimizer = torch.optim.Adam([self.weights], lr=self.lr)
         y_s_one_hot = get_one_hot(y_s)
+        self.model.train()
         for i in tqdm(range(self.iter)):
             logits_s = self.get_logits(support)
             # logits_q = self.get_logits(query)
@@ -159,13 +162,15 @@ class Baseline(object):
             optimizer.step()
 
             t1 = time.time()
-            t0 = time.time()
+            self.model.eval()
 
-        self.record_info(new_time=t1 - t0,
-                         support=support,
-                         query=query,
-                         y_s=y_s,
-                         y_q=y_q)
+            self.record_info(new_time=t1 - t0,
+                             support=support,
+                             query=query,
+                             y_s=y_s,
+                             y_q=y_q)
+            self.model.train()
+            t0 = time.time()
 
 
     def run_task(self, task_dic, shot):

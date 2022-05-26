@@ -2,8 +2,8 @@ import numpy as np
 from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features_simple
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.km_unbiased import KM_UNBIASED
-from src.methods.km_unbiased_GD import KM_UNBIASED_GD
 from src.methods.km import KM_BIASED
+from src.methods.km_unbiased_GD import KM_UNBIASED_GD
 from src.methods.ici import ICI
 from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
@@ -15,8 +15,6 @@ import torch
 import os
 from src.utils import load_pickle, save_pickle
 import random
-from tqdm import tqdm
-import pickle
 
 class Evaluator:
     def __init__(self, device, args, log_file):
@@ -24,43 +22,6 @@ class Evaluator:
         self.args = args
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
-        
-    def extract_all_features(self, model):
-        self.logger.info("=> Runnning full evaluation with method: {}".format(self.args.method))
-        load_checkpoint(model=model, model_path=self.args.ckpt_path, type=self.args.model_tag)
-        if self.args.target_data_path is not None:  # This mean we are in the cross-domain scenario
-            loader_info.update({'path': self.args.target_data_path,
-                                'split_dir': self.args.target_split_dir})
-        loader_info = {'aug': False, 'out_name': False}    
-        dataset = {}
-        
-        train_set = get_dataset('train', args=self.args, **loader_info)
-        dataset['train_loader'] = train_set
-        support_set = get_dataset(self.args.used_set_support, args=self.args, **loader_info)
-        dataset.update({'support': support_set})
-        query_set = get_dataset(self.args.used_set_query, args=self.args, **loader_info)
-        dataset.update({'query': query_set})
-
-        train_loader = get_dataloader(sets=train_set, args=self.args)
-        train_mean, _ = extract_mean_features(model=model,  train_loader=train_loader, args=self.args,
-                                              logger=self.logger, device=self.device)
-
-        support = []
-        y_s = []
-        for i in range(len(support_set)):
-            print("i = ", i)
-            sampler = SamplerBasic(i)
-            test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
-                                                 sampler=sampler, pin_memory=False)
-            for (data_support, labels_support, _) in test_loader_support:
-                features_support = get_features_simple(model, data_support)
-                support.append(features_support)
-                y_s.append(labels_support)
-              
-        support = torch.stack(support).squeeze(1)
-        y_s = torch.cat(y_s)
-        #torch.save(support, 'features_support.pt')
-        #torch.save(y_s, 'labels_support.pt')
 
         
     def extract_features(self, model, model_path, model_tag, used_set, used_set_name, fresh_start, loaders_dic):
@@ -178,11 +139,9 @@ class Evaluator:
         
             results_task = []
             results_task_F1 = []
-            for i in tqdm(range(int(self.args.number_tasks/self.args.batch_size))):
-                #n_ways = random.randint(self.args.n_ways_min, self.args.n_ways_max)
-                n_ways = self.args.n_ways
+            for i in range(int(self.args.number_tasks/self.args.batch_size)):
                 sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
-                                        n_ways, self.args.num_classes_test, shot, self.args.n_query, 
+                                        self.args.n_ways, self.args.num_classes_test, shot, self.args.n_query, 
                                         self.args.balanced, self.args.used_set_support, self.args.alpha_dirichlet)
                 sampler.create_list_classes(all_labels_support, all_labels_query)
                 sampler_support = SamplerSupport(sampler)
@@ -195,33 +154,16 @@ class Evaluator:
                 test_loader_support = []
                 for indices in sampler_support :
                     test_loader_support.append((all_features_support[indices,:], all_labels_support[indices]))
-                
-                #test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
-                #                             sampler=sampler_support, pin_memory=False)
-
-    
-                #test_loader_query = get_dataloader(sets=dataset['query'], args=self.args,
-                #                             sampler=sampler_query, pin_memory=False)
       
-                task_generator = Tasks_Generator(n_ways=n_ways, num_classes=self.args.num_classes_test, shot=shot, n_query=self.args.n_query, loader_support=test_loader_support, loader_query=test_loader_query, train_mean=train_mean, log_file=self.log_file)
+                task_generator = Tasks_Generator(n_ways=self.args.n_ways, num_classes=self.args.num_classes_test, shot=shot, n_query=self.args.n_query, loader_support=test_loader_support, loader_query=test_loader_query, train_mean=train_mean, log_file=self.log_file)
               
                 method = self.get_method_builder(model=model)
 
                 tasks = task_generator.generate_tasks()
                 # Run task
                 logs = method.run_task(task_dic=tasks, shot=shot)
-                #print(process.memory_info().rss)  # in bytes 
-
                 acc_mean, acc_conf = compute_confidence_interval(logs['acc'][:, -1])
                 F1_mean, F1_conf = compute_confidence_interval(logs['F1'][:, -1])
-
-                if self.args.convergence_ablation:
-                    times_mean = logs['time']
-                    times_std = 0.
-                    if 'criterion' in logs:
-                        criterion_mean, criterion_std = compute_confidence_interval(logs['criterion'], axis=0)
-                    full_acc_mean, full_acc_std = compute_confidence_interval(logs['acc'], axis=0)
-                    print(times_mean)
 
                 results_task.append(acc_mean)
                 results_task_F1.append(F1_mean)
@@ -229,28 +171,6 @@ class Evaluator:
                 del tasks
             results.append(results_task)
             results_F1.append(results_task_F1)
-
-            if self.args.convergence_ablation:
-                root_file = os.path.join('results_ablation', self.args.dataset, self.args.arch)
-            else:
-                root_file = os.path.join('results_test', self.args.dataset, self.args.arch)
-
-            os.makedirs(root_file, exist_ok=True)
-            # Saving convergence to files for plotting
-            if self.args.convergence_ablation:
-                for arr_name in ['criterion', 'times', 'full_acc']:
-                    if f"{arr_name}_mean" in locals():
-                        array_mean = eval(f"{arr_name}_mean")
-                        array_std = eval(f"{arr_name}_std")
-                        obj = {'mean': array_mean, 'std': array_std}
-                        method_dir = os.path.join(root_file, self.args.method)
-                        os.makedirs(method_dir, exist_ok=True)
-                        filename = os.path.join(method_dir, f"{arr_name}_{shot}.pkl")
-                        with open(filename, 'wb') as f:
-                            pickle.dump(obj, f)
-                        self.logger.info(f"Saved file at {filename}")
-                    else:
-                        self.logger.warning(f"{arr_name} variable not defined")
 
         mean_accuracies = np.asarray(results).mean(1)
         mean_F1s = np.asarray(results_F1).mean(1)
@@ -275,28 +195,26 @@ class Evaluator:
             param = self.args.temp
             
         self.logger.info('----- Final test results -----')
+        
         for shot in self.args.shots:
-            root_file = os.path.join('results_test', self.args.dataset, self.args.arch)
-            os.makedirs(root_file, exist_ok=True)
-            name_file_1 = os.path.join(root_file, f'{self.args.method}_alpha{self.args.alpha}_shots{shot}.txt')
+            name_file = 'results_test/{}/{}/{}_shots{}.txt'.format(self.args.dataset, self.args.arch, self.args.method, shot)
 
-            if os.path.isfile(name_file_1) == True:
-                f = open(name_file_1, 'a')
+            if not os.path.exists('results_test/{}/{}'.format(self.args.dataset, self.args.arch)):
+                os.makedirs('results_test/{}/{}'.format(self.args.dataset, self.args.arch))
+            if os.path.isfile(name_file) == True:
+               f = open(name_file, 'a')
             else:
-                f = open(name_file_1, 'w')
+               f = open(name_file, 'w')
                 
             f.write(str(self.args.n_ways)+'\t')
-            #f.write(str(param)+'\t')
-            self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.
-                             format(shot, self.args.number_tasks,
-                                    mean_accuracies[self.args.shots.index(shot)]))
-            self.logger.info('{}-shot mean F1 score over {} tasks: {}'.
-                             format(shot, self.args.number_tasks, 
-                                    mean_F1s[self.args.shots.index(shot)]))
+            self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
+                                                                                   mean_accuracies[self.args.shots.index(shot)]))
+            self.logger.info('{}-shot mean F1 score over {} tasks: {}'.format(shot, self.args.number_tasks,
+                                                                                   mean_F1s[self.args.shots.index(shot)]))
             f.write(str(round(100*mean_accuracies[self.args.shots.index(shot)], 1)) +'\t' )
             f.write(str(round(100*mean_F1s[self.args.shots.index(shot)], 1)) +'\t' )
-            f.write('\n')
-            f.close()
+
+        f.close()
             
         
         #self.logger.info('----- Final test results -----')
@@ -312,8 +230,6 @@ class Evaluator:
             method_builder = ALPHA_TIM(**method_info)
         elif self.args.method == 'KM-UNBIASED':
             method_builder = KM_UNBIASED(**method_info)
-        elif self.args.method == 'KM-UNBIASED-GD':
-            method_builder = KM_UNBIASED_GD(**method_info)
         elif self.args.method == 'KM-BIASED':
             method_builder = KM_BIASED(**method_info)
         elif self.args.method == 'TIM-GD':
@@ -328,7 +244,9 @@ class Evaluator:
             method_builder = PT_MAP(**method_info)
         elif self.args.method == 'ICI':
             method_builder = ICI(**method_info)
+        elif self.args.method == 'KM-UNBIASED-GD':
+            method_builder = KM_UNBIASED_GD(**method_info)
         else:
-            self.logger.exception("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            self.logger.exception("Method must be in ['KM_UNBIASED', 'KM_UNBIASED_GD', 'KM_BIASED', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
             raise ValueError("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
         return method_builder
