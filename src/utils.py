@@ -149,9 +149,11 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar', folder='resul
 
 def load_checkpoint(model, model_path, type='best'):
     if type == 'best':
-        checkpoint = torch.load('{}/model_best.pth.tar'.format(model_path))
+        checkpoint = torch.load('{}/model_best.pth.tar'.format(model_path),
+                                )
     elif type == 'last':
-        checkpoint = torch.load('{}/checkpoint.pth.tar'.format(model_path))
+        checkpoint = torch.load('{}/checkpoint.pth.tar'.format(model_path),
+                                )
     else:
         assert False, 'type should be in [best, or last], but got {}'.format(type)
     state_dict = checkpoint['state_dict']

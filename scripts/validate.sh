@@ -51,6 +51,6 @@ for method in ${METHODS}; do \
     for value in ${parameter_values}; do \
         python3 -m main --base_config config/dirichlet/base_config/${architecture}/${dataset}/base_config.yaml \
                         --method_config config/dirichlet/methods_config/${method}.yaml \
-                        opts ${parameter_name} ${value} n_ways 5 num_classes_test 5 ;\
+                        opts ${parameter_name} ${value} n_ways 5 num_classes_test 5 path ${DATASET_DIR};\
     done
 done

@@ -1,6 +1,6 @@
 *.zip
 *.pt
-data
+data/
 checkpoints
 copie
 plots
@@ -8,3 +8,5 @@ exemple_sampler_data
 *.sublime-project
 *.sublime-workspace
 *.DS_Store
+logs
+results_test

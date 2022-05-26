@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
     #callback = None if args.visdom_port is None else VisdomLogger(port=args.visdom_port)
     callback = None
     if args.seed is not None:
@@ -52,7 +52,7 @@ def main():
 
     # create model
     logger.info("=> Creating model '{}'".format(args.arch))
-    model = torch.nn.DataParallel(get_model(args)).cuda()
+    model = torch.nn.DataParallel(get_model(args)).to(device)
 
     logger.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
     optimizer = get_optimizer(args=args, model=model)
@@ -61,7 +61,7 @@ def main():
         pretrain = os.path.join(args.pretrain, 'checkpoint.pth.tar')
         if os.path.isfile(pretrain):
             logger.info("=> loading pretrained weight '{}'".format(pretrain))
-            checkpoint = torch.load(pretrain)
+            checkpoint = torch.load(pretrain, map_location=device)
             model_dict = model.state_dict()
             params = checkpoint['state_dict']
             params = {k: v for k, v in params.items() if k in model_dict}
@@ -74,7 +74,7 @@ def main():
         resume_path = args.ckpt_path + '/checkpoint.pth.tar'
         if os.path.isfile(resume_path):
             logger.info("=> loading checkpoint '{}'".format(resume_path))
-            checkpoint = torch.load(resume_path)
+            checkpoint = torch.load(resume_path, map_location=device)
             start_epoch = checkpoint['epoch']
             best_prec1 = checkpoint['best_prec1']
             # scheduler.load_state_dict(checkpoint['scheduler'])
@@ -132,7 +132,7 @@ def main():
 
     # Final evaluation on test set
     logger.info("=> Creating model '{}'".format(args.arch))
-    model = torch.nn.DataParallel(get_model(args)).cuda()
+    model = torch.nn.DataParallel(get_model(args)).to(device)
 
     logger.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
     evaluator = Evaluator(device=device, args=args, log_file=log_file)

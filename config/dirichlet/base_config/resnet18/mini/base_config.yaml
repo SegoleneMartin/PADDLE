@@ -40,7 +40,7 @@ DATA:
 
 EVAL:
     evaluate: True      # Set to True to evaluate methods
-    number_tasks: 1000 # Number of tasks to evaluate
+    number_tasks: 10000 # Number of tasks to evaluate
     batch_size: 1000
     n_ways: 5
     num_classes_test : 20
@@ -53,6 +53,7 @@ EVAL:
     used_set_support: 'test'
     used_set_query: 'test'
     fresh_start: False
+    convergence_ablation: False
 
 DISTRIBUTED:
     cuda: True
