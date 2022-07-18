@@ -16,7 +16,7 @@ class Baseline(object):
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.dataset = args.dataset
@@ -105,7 +105,7 @@ class Baseline(object):
         n_tasks, q_shot = preds_q.size()
         self.timestamps.append(new_time)
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
@@ -213,9 +213,18 @@ class Baseline_PlusPlus(Baseline):
             distance = get_metric('cosine')(self.weights[j], query[j])
             preds_q.append(torch.argmin(distance, dim=1))
         preds_q = torch.stack(preds_q)
+        
+        n_tasks, q_shot = preds_q.size()
 
         self.timestamps.append(new_time)
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
+        union = list(range(self.n_ways))
+        for i in range(n_tasks):
+            ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
+            preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
+            #union = set.union(set(ground_truth),set(preds))
+            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
+            self.test_F1.append(f1)
 
 
     def run_adaptation(self, support, query, y_s, y_q, shot):

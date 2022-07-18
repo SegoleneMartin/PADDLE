@@ -4,8 +4,8 @@ import os
 from itertools import cycle
 
 class Tasks_Generator:
-    def __init__(self, n_ways, shot, n_query, num_classes, loader_support, loader_query, train_mean, log_file):
-        self.n_ways = n_ways
+    def __init__(self, k_eff, shot, n_query, n_ways, loader_support, loader_query, train_mean, log_file):
+        self.k_eff = k_eff
         self.shot = shot
         self.n_query = n_query
         self.loader_support = loader_support
@@ -13,26 +13,26 @@ class Tasks_Generator:
         self.log_file = log_file
         self.logger = Logger(__name__, log_file)
         self.train_mean = train_mean
-        self.num_classes = num_classes
+        self.n_ways = n_ways
 
     def get_task(self, data_support, data_query, labels_support, labels_query):
         """
         inputs:
-            data_support : torch.tensor of shape [s_shot * n_ways, channels, H, W]
+            data_support : torch.tensor of shape [s_shot * k_eff, channels, H, W]
             data_query : torch.tensor of shape [n_query, channels, H, W]
-            labels_support :  torch.tensor of shape [s_shot * n_ways + n_query]
+            labels_support :  torch.tensor of shape [s_shot * k_eff + n_query]
             labels_query :  torch.tensor of shape [n_query]
         returns :
-            task : Dictionnary : x_support : torch.tensor of shape [n_ways * s_shot, channels, H, W]
+            task : Dictionnary : x_support : torch.tensor of shape [k_eff * s_shot, channels, H, W]
                                  x_query : torch.tensor of shape [n_query, channels, H, W]
-                                 y_support : torch.tensor of shape [n_ways * s_shot]
+                                 y_support : torch.tensor of shape [k_eff * s_shot]
                                  y_query : torch.tensor of shape [n_query]
         """
         #'''
         k = self.n_query
-        #unique_labels = labels_support[:self.n_ways]
+        #unique_labels = labels_support[:self.k_eff]
         unique_labels = torch.unique(labels_support)
-        #unique_labels = (unique_labels[torch.randperm(len(unique_labels))])[:self.n_ways]
+        #unique_labels = (unique_labels[torch.randperm(len(unique_labels))])[:self.k_eff]
         new_labels_support = torch.zeros_like(labels_support)
         new_labels_query = torch.zeros_like(labels_query)
         for j, y in enumerate(unique_labels):
@@ -52,10 +52,10 @@ class Tasks_Generator:
         """
 
         returns :
-            merged_task : { x_support : torch.tensor of shape [batch_size, n_ways * s_shot, channels, H, W]
-                            x_query : torch.tensor of shape [batch_size, n_ways * query_shot, channels, H, W]
-                            y_support : torch.tensor of shape [batch_size, n_ways * shot]
-                            y_query : torch.tensor of shape [batch_size, n_ways * query_shot]
+            merged_task : { x_support : torch.tensor of shape [batch_size, k_eff * s_shot, channels, H, W]
+                            x_query : torch.tensor of shape [batch_size, k_eff * query_shot, channels, H, W]
+                            y_support : torch.tensor of shape [batch_size, k_eff * shot]
+                            y_query : torch.tensor of shape [batch_size, k_eff * query_shot]
                             train_mean: torch.tensor of shape [feature_dim]}
         """
         tasks_dics = []

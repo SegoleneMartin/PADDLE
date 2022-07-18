@@ -1,4 +1,0 @@
-METHOD:
-  method: 'KM-UNBIASED-GD'
-  iter: 100
-  alpha: 75

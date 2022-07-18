@@ -1,0 +1,20 @@
+EVAL:
+    dataset: 'mini'
+    arch: 'resnet18'
+    evaluate: True      # Set to True to evaluate methods
+    method: 'soft_km' # ('paddle', 'paddle_gd', 'tim', 'alpha_tim', 'bdcspn', 'laplacianshot', 'ici', 'pt_map', 'baseline', 'soft_km')
+    number_tasks: 2 # Number of tasks to evaluate
+    batch_size: 2
+    k_eff: 5  # number of different classes represented in the query
+    n_ways : 5 # 'full' for all test classes (i.e. K), or integer
+    n_query: 75 # Balanced case: 15 query data per class
+    sampling: 'uniform' # ('balanced' | 'dirichlet' | 'uniform') sampling of the query
+    alpha_dirichlet: 1  # if sampling==dirichlet, dirichlet parameter
+    model_tag: 'best'
+    plt_metrics: ['accs']
+    shots: [5,10,20]
+    used_set_support: 'test'  #('test', 'val') for mini and tiered, 'repr' for inatural
+    used_set_query: 'test'  #('test', 'val') for mini and tiered, 'query' for inatural
+    fresh_start: False
+    convergence_ablation: False
+    tune_parameters: False

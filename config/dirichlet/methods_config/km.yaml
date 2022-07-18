@@ -1,4 +1,0 @@
-METHOD:
-  method: 'KM-BIASED'
-  iter: 20
-  alpha: 0

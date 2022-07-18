@@ -21,15 +21,19 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Main')
-    parser.add_argument('--base_config', type=str, required=False, default='config/dirichlet/base_config/resnet18/cub/base_config.yaml', help='Base config file')
-    parser.add_argument('--method_config', type=str, required=False, default='config/dirichlet/methods_config/km.yaml', help='Method config file')
+    cfg = load_cfg_from_cfg_file('config/main_config.yaml')
     parser.add_argument('--opts', default=None, nargs=argparse.REMAINDER)
     args = parser.parse_args()
-    assert args.base_config is not None
-    cfg = load_cfg_from_cfg_file(args.base_config)
-    cfg.update(load_cfg_from_cfg_file(args.method_config))
     if args.opts is not None:
         cfg = merge_cfg_from_list(cfg, args.opts)
+    model_config = 'config/{}/{}/model_config/model_config.yaml'.format(cfg.dataset, cfg.arch)
+    method_config = 'config/{}/{}/methods_config/{}.yaml'.format(cfg.dataset, cfg.arch, cfg.method)
+    print("method", method_config)
+    cfg.update(load_cfg_from_cfg_file(model_config))
+    cfg.update(load_cfg_from_cfg_file(method_config))
+
+    if cfg.n_ways == 'full':
+        cfg.n_ways = cfg.num_classes_test
     return cfg
 
 def main():
@@ -47,7 +51,7 @@ def main():
 
     # init logger
     log_file = get_log_file(log_path=args.log_path, dataset=args.dataset,
-                            backbone=args.arch, method=args.method, balanced=args.balanced, alpha_dirichlet=args.alpha_dirichlet)
+                            backbone=args.arch, method=args.method, sampling=args.sampling, alpha_dirichlet=args.alpha_dirichlet)
     logger = Logger(__name__, log_file)
 
     # create model

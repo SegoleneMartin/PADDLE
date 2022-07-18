@@ -22,7 +22,7 @@ class TIM(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.dataset = args.dataset
         self.used_set_support = args.used_set_support
 
@@ -109,7 +109,7 @@ class TIM(object):
             self.loss_weights[0] : Scalar
         """
         self.N_s, self.N_q = support.size(1), query.size(1)
-        #self.num_classes = torch.unique(y_s).size(0)
+        #self.n_ways = torch.unique(y_s).size(0)
         if self.loss_weights[0] == 'auto':
             self.loss_weights[0] = (1 + self.loss_weights[2]) * self.N_s / self.N_q
 
@@ -128,7 +128,7 @@ class TIM(object):
         n_tasks, q_shot = preds_q.size()
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())

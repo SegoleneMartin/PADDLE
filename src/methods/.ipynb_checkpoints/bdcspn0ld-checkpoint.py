@@ -14,13 +14,13 @@ class BDCSPN(object):
         #self.device = device
         self.device = 'cpu'
         self.norm_type = args.norm_type
-        self.n_ways = args.n_ways
+        self.k_eff = args.k_eff
         self.temp = args.temp
         self.num_NN = args.num_NN
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.dataset = args.dataset
@@ -48,7 +48,7 @@ class BDCSPN(object):
         print('y_q', y_q)
         print('preds', preds_q)
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
@@ -104,7 +104,7 @@ class BDCSPN(object):
             support_ = weights / counts
         else:
             query_aug = np.concatenate((support, query), axis=1)  # Augmented set S' (X')
-            support_ = support.reshape(support.shape[0], shot, self.num_classes, support.shape[-1]).mean(1)  # Init basic prototypes Pn
+            support_ = support.reshape(support.shape[0], shot, self.n_ways, support.shape[-1]).mean(1)  # Init basic prototypes Pn
             support_ = torch.from_numpy(support_)
             query_aug = torch.from_numpy(query_aug)
 
@@ -165,7 +165,7 @@ class BDCSPN(object):
             support = support.numpy()
             query = query.numpy()
             # y_s = y_s.numpy().squeeze(2)[:,::shot][0]
-            # y_s = y_s.squeeze(2)[:, :self.num_classes][0]
+            # y_s = y_s.squeeze(2)[:, :self.n_ways][0]
             y_q = y_q.long().squeeze(2).numpy()
             support = self.proto_rectification(y_s=y_s, support=support, query=query, shot=shot)
 
@@ -200,7 +200,7 @@ class BDCSPN(object):
                 indexes = np.unique(y_s[i], return_index=True)[1]
                 y_s_i = [y_s[i][index].item() for index in sorted(indexes)]
             else:
-                y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
+                y_s_i = y_s.numpy().squeeze(2)[i, :self.n_ways]
             print("y_s_i", y_s_i)
             substract = support[i][:, None, :] - query[i]
             distance = LA.norm(substract, 2, axis=-1)

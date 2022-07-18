@@ -13,7 +13,7 @@ def conv_block(in_channels: int, out_channels: int) -> nn.Module:
 
 
 class Conv4(nn.Module):
-    def __init__(self, num_classes, remove_linear=False):
+    def __init__(self, num_classes_train, remove_linear=False):
         super(Conv4, self).__init__()
         self.conv1 = conv_block(3, 64)
         self.conv2 = conv_block(64, 64)
@@ -22,7 +22,7 @@ class Conv4(nn.Module):
         if remove_linear:
             self.logits = None
         else:
-            self.logits = nn.Linear(1600, num_classes)
+            self.logits = nn.Linear(1600, num_classes_train)
 
     def forward(self, x, feature=False):
         x = self.conv1(x)

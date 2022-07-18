@@ -25,7 +25,7 @@ class ICI(object):
         self.reduce = args.reduce
         self.d = args.d
         self.C = args.C
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.initial_embed(args.reduce, args.d)
         self.initial_classifier(args.classifier)
         self.init_info_lists()
@@ -48,7 +48,7 @@ class ICI(object):
         self.timestamps.append(new_time)
         accuracy = (preds_q.cpu() == y_q.cpu()).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())

@@ -3,7 +3,7 @@ from loguru import logger
 from pathlib import Path
 import numpy as np
 
-list_methods = ['KM-UNBIASED', 'KM-BIASED', 'PT-MAP', 'ICI', \
+list_methods = ['PADDLE', 'SOFT-KM', 'PT-MAP', 'ICI', \
                 'LaplacianShot', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN']
 
 

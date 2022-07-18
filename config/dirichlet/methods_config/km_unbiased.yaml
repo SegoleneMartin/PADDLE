@@ -1,5 +1,0 @@
-METHOD:
-  method: 'KM-UNBIASED'
-  iter: 40
-  alpha: 75
-  tau: 100

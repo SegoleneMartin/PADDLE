@@ -1,0 +1,7 @@
+METHOD:
+  method: 'LaplacianShot'
+  knn: 3
+  lmd: 0.7
+  proto_rect: False
+  norm_type: 'CL2N' # ('CL2N', 'L2N', 'UN')
+  iter: 20

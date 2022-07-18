@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-list_methods = ['KM-UNBIASED', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'KM-UNBIASED-GD', 'LaplacianShot']
+list_methods = ['PADDLE', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'PADDLE-GD', 'LaplacianShot']
 list_name = [r'\textsc{PADDLE}', r'\textsc{TIM}', r'$\alpha$-\textsc{TIM}',
              'Baseline', r'\textsc{BDCSPN}', r'\textsc{PGD}', 'LaplacianShot']
 markers = ["^", ".", "v", "1", "p", "*", "X", "d", "P", "<", ">"]

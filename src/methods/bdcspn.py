@@ -13,13 +13,13 @@ class BDCSPN(object):
     def __init__(self, model, device, log_file, args):
         self.device = 'cpu'
         self.norm_type = args.norm_type
-        self.n_ways = args.n_ways
+        self.k_eff = args.k_eff
         self.temp = args.temp
         self.num_NN = args.num_NN
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
         self.dataset = args.dataset
@@ -46,7 +46,7 @@ class BDCSPN(object):
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
 
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())

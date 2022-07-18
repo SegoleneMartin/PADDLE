@@ -14,10 +14,10 @@ class Trainer:
         val_set = get_dataset(split='val', args=self.args, aug=False, out_name=False)
         sampler_val = CategoriesSampler(val_set.labels, self.args.meta_val_iter,
                                         self.args.meta_val_way, self.args.meta_val_shot, self.args.meta_val_query,
-                                                  'balanced', self.args.alpha_dirichlet)
+                                                  'sampling', self.args.alpha_dirichlet)
         self.val_loader = get_dataloader(sets=val_set, args=self.args, sampler=sampler_val, shuffle=True)
         self.device = device
-        self.num_classes = self.args.num_classes
+        self.num_classes_train = self.args.num_classes_train
 
     def cross_entropy(self, logits, one_hot_targets, reduction='batchmean'):
         logsoftmax_fn = nn.LogSoftmax(dim=1)
@@ -89,8 +89,8 @@ class Trainer:
     def smooth_one_hot(self, targets):
         assert 0 <= self.args.label_smoothing < 1
         with torch.no_grad():
-            new_targets = torch.empty(size=(targets.size(0), self.num_classes), device=self.device)
-            new_targets.fill_(self.args.label_smoothing / (self.num_classes-1))
+            new_targets = torch.empty(size=(targets.size(0), self.num_classes_train), device=self.device)
+            new_targets.fill_(self.args.label_smoothing / (self.num_classes_train-1))
             new_targets.scatter_(1, targets.unsqueeze(1), 1. - self.args.label_smoothing)
         return new_targets
 

@@ -12,13 +12,13 @@ from sklearn.metrics import accuracy_score, f1_score
 class PT_MAP(object):
     def __init__(self, model, device, log_file, args):
         self.device = device
+        self.k_eff = args.k_eff
         self.n_ways = args.n_ways
-        self.num_classes = args.num_classes_test
         self.number_tasks = args.batch_size
         self.alpha = args.alpha
         self.beta = args.beta
         self.lam = args.lam
-        self.n_queries = args.n_query // args.n_ways
+        self.n_queries = args.n_query // args.k_eff
         self.n_sum_query = args.n_query
         self.n_epochs = args.n_epochs
         self.model = model
@@ -50,7 +50,7 @@ class PT_MAP(object):
             imbalanced_support = True
         else:
             imbalanced_support = False
-        method_info = {'device': self.device, 'lam': self.lam, 'num_classes_test': self.num_classes, 'n_ways': self.n_ways, 'imbalanced_support': imbalanced_support}
+        method_info = {'device': self.device, 'lam': self.lam, 'n_ways': self.n_ways, 'k_eff': self.k_eff, 'imbalanced_support': imbalanced_support}
         return GaussianModel(**method_info)
 
     def power_transform(self, support, query):
@@ -75,8 +75,8 @@ class PT_MAP(object):
             outputs:
                 data : torch.Tensor of shape [n_task, s_shot+q_shot, feature_dim]
         """
-        support = data[:, :shot*self.num_classes, :]
-        query = data[:, shot*self.num_classes:, :]
+        support = data[:, :shot*self.n_ways, :]
+        query = data[:, shot*self.n_ways:, :]
 
         support = support - support.mean(1, keepdim=True)
         support = support / torch.norm(support, 2, 2)[:,:,None]
@@ -135,7 +135,7 @@ class PT_MAP(object):
         n_tasks, q_shot = preds_q.size()
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
         self.timestamps.append(new_time)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
@@ -194,7 +194,7 @@ class PT_MAP(object):
 
         gaus_model = self.get_GaussianModel()
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,
-                                         shot=shot, n_ways=self.num_classes, n_queries=0, n_nfeat=data.size(2))
+                                         shot=shot, k_eff=self.n_ways, n_queries=0, n_nfeat=data.size(2))
 
         self.run_adaptation(model=gaus_model, data=data, y_s=y_s, y_q=y_q, shot=shot)
 

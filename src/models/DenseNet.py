@@ -56,11 +56,11 @@ class DenseNet(nn.Module):
         bn_size (int) - multiplicative factor for number of bottle neck layers
           (i.e. bn_size * k features in the bottleneck layer)
         drop_rate (float) - dropout rate after each dense layer
-        num_classes (int) - number of classification classes
+        num_classes_train (int) - number of classification classes
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000):
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes_train=1000):
 
         super(DenseNet, self).__init__()
 
@@ -85,7 +85,7 @@ class DenseNet(nn.Module):
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes)
+        self.classifier = nn.Linear(num_features, num_classes_train)
 
         # Official init from torch repo.
         for m in self.modules():

@@ -49,12 +49,12 @@ config/<balanced or dirichlet>/base_config/<resnet18 or wideres>/<mini or tiered
 
 The <path_to_method_config_file> follows this hierarchy:
 ```python
-config/<balanced or dirichlet>/methods_config/<km or km_unbiased or km_gd_unbiased or alpha_tim or tim or baseline or bdcspn or laplacianshot or pt_map or ici>.yaml
+config/<balanced or dirichlet>/methods_config/<soft_km or paddle or km_gd_unbiased or alpha_tim or tim or baseline or bdcspn or laplacianshot or pt_map or ici>.yaml
 ```
 
 For instance, if you want to reproduce the results in the general few-shot setting proposed in the paper, with Keff=5, on mini-Imagenet, using ResNet-18, with PADDLE method go to the root of the directory and execute:
 ```python
-python3 -m src.main --base_config config/dirichlet/base_config/resnet18/mini/base_config.yaml --method_config config/dirichlet/methods_config/km_unbiased.yaml
+python3 -m src.main --base_config config/dirichlet/base_config/resnet18/mini/base_config.yaml --method_config config/dirichlet/methods_config/paddle.yaml
 ```
 
 # Acknowledgements

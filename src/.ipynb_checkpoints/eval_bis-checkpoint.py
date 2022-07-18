@@ -1,8 +1,8 @@
 import numpy as np
 from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features
 from src.methods.tim import ALPHA_TIM, TIM_GD
-from src.methods.km_unbiased import KM_UNBIASED
-from src.methods.km import KM_BIASED
+from src.methods.paddle import PADDLE
+from src.methods.soft_km import SOFT_KM
 from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
 from src.methods.simpleshot import SimpleShot
@@ -54,12 +54,12 @@ class Evaluator:
         results_F1 = []
         for shot in self.args.shots:
             sampler = CategoriesSampler(dataset['test'].labels, self.args.batch_size,
-                                        self.args.n_ways, shot, self.args.n_query,
-                                        self.args.balanced, self.args.alpha_dirichlet)
+                                        self.args.k_eff, shot, self.args.n_query,
+                                        self.args.sampling, self.args.alpha_dirichlet)
 
             test_loader = get_dataloader(sets=dataset['test'], args=self.args,
                                          sampler=sampler, pin_memory=False)
-            task_generator = Tasks_Generator(n_ways=self.args.n_ways, shot=shot, loader=test_loader,
+            task_generator = Tasks_Generator(k_eff=self.args.k_eff, shot=shot, loader=test_loader,
                                              train_mean=train_mean, log_file=self.log_file)
             results_task = []
             results_task_F1 = []
@@ -88,7 +88,7 @@ class Evaluator:
 
         if self.args.method == 'ALPHA-TIM':
             param = self.args.alpha_values[1]
-        elif self.args.method == 'KM-UNBIASED':
+        elif self.args.method == 'PADDLE':
             param = self.args.alpha
         elif self.args.method == 'LaplacianShot':
             param = self.args.lmd[0]
@@ -132,10 +132,10 @@ class Evaluator:
         method_info = {'model': model, 'device': self.device, 'log_file': self.log_file, 'args': self.args}
         if self.args.method == 'ALPHA-TIM':
             method_builder = ALPHA_TIM(**method_info)
-        elif self.args.method == 'KM-UNBIASED':
-            method_builder = KM_UNBIASED(**method_info)
-        elif self.args.method == 'KM-BIASED':
-            method_builder = KM_BIASED(**method_info)
+        elif self.args.method == 'PADDLE':
+            method_builder = PADDLE(**method_info)
+        elif self.args.method == 'SOFT-KM':
+            method_builder = SOFT_KM(**method_info)
         elif self.args.method == 'TIM-GD':
             method_builder = TIM_GD(**method_info)
         elif self.args.method == 'LaplacianShot':
@@ -157,6 +157,6 @@ class Evaluator:
         elif self.args.method == 'ICI':
             method_builder = ICI(**method_info)
         else:
-            self.logger.exception("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
-            raise ValueError("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            self.logger.exception("Method must be in ['PADDLE', 'SOFT_KM', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            raise ValueError("Method must be in ['PADDLE', 'SOFT_KM', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
         return method_builder

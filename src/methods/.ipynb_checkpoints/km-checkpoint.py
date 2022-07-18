@@ -20,7 +20,7 @@ class KM(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
 
     def init_info_lists(self):
         self.timestamps = []
@@ -95,7 +95,7 @@ class KM(object):
         self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
@@ -161,7 +161,7 @@ class KM(object):
         return logs
         
 
-class KM_BIASED(KM):
+class SOFT_KM(KM):
     def __init__(self, model, device, log_file, args):
         super().__init__(model=model, device=device, log_file=log_file, args=args)
 
@@ -182,7 +182,7 @@ class KM_BIASED(KM):
         inputs:
             support : torch.Tensor of shape [n_task, s_shot, feature_dim]
             query : torch.Tensor of shape [n_task, q_shot, feature_dim]
-            y_s_one_hot : torch.Tensor of shape [n_task, s_shot, num_classes]
+            y_s_one_hot : torch.Tensor of shape [n_task, s_shot, n_ways]
 
 
         updates :
@@ -207,7 +207,7 @@ class KM_BIASED(KM):
         updates :
             self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
         """
-        #self.logger.info(" ==> Executing KM-UNBIASED adaptation over {} iterations on {} shot tasks ...".format(self.iter, shot))
+        #self.logger.info(" ==> Executing PADDLE adaptation over {} iterations on {} shot tasks ...".format(self.iter, shot))
         t0 = time.time()
         y_s_one_hot = get_one_hot(y_s).to(self.device)
         self.weights.requires_grad_()

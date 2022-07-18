@@ -15,8 +15,8 @@ import copy
 import requests
 
 def get_one_hot(y_s):
-    num_classes = torch.unique(y_s).size(0)
-    eye = torch.eye(num_classes).to(y_s.device)
+    n_ways = torch.unique(y_s).size(0)
+    eye = torch.eye(n_ways).to(y_s.device)
     one_hot = []
     for y_task in y_s:
         one_hot.append(eye[y_task].unsqueeze(0))

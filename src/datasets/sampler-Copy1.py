@@ -8,7 +8,7 @@
 #             inputs:
 #                 label : All labels of dataset
 #                 n_batch : Number of batches to load
-#                 n_cls : Number of classification ways (n_ways)
+#                 n_cls : Number of classification ways (k_eff)
 #                 s_shot : Support shot
 #                 n_query : Size of query set
 #                 balanced : 'balanced': Balanced query class distribution: Standard class balanced Few-Shot setting
@@ -120,7 +120,7 @@
 #     return prob.astype(int)
 
 
-# def get_dirichlet_query_dist(alpha, n_tasks, n_ways, n_querys):
-#     alpha = np.full(n_ways, alpha)
+# def get_dirichlet_query_dist(alpha, n_tasks, k_eff, n_querys):
+#     alpha = np.full(k_eff, alpha)
 #     prob_dist = np.random.dirichlet(alpha, n_tasks)
 #     return convert_prob_to_samples(prob=prob_dist, n_query=n_querys)

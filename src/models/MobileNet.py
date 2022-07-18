@@ -30,7 +30,7 @@ class MobileNet(nn.Module):
     # (128,2) means conv planes=128, conv stride=2, by default conv stride=1
     cfg = [64, (128, 2), 128, (256, 2), 256, (512, 2), 512, 512, 512, 512, 512, (1024, 2), 1024]
 
-    def __init__(self, num_classes=10, remove_linear=False):
+    def __init__(self, num_classes_train=10, remove_linear=False):
         super(MobileNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
@@ -38,7 +38,7 @@ class MobileNet(nn.Module):
         if remove_linear:
             self.linear = None
         else:
-            self.linear = nn.Linear(1024, num_classes)
+            self.linear = nn.Linear(1024, num_classes_train)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
     def _make_layers(self, in_planes):

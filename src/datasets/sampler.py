@@ -9,10 +9,10 @@ class CategoriesSampler():
             inputs:
                 label : All labels of dataset
                 n_batch : Number of batches to load
-                n_cls : Number of classification ways (n_ways)
+                n_cls : Number of classification ways (k_eff)
                 s_shot : Support shot
                 n_query : Size of query set
-                balanced : 'balanced': Balanced query class distribution: Standard class balanced Few-Shot setting
+                sampling : 'sampling': Balanced query class distribution: Standard class sampling Few-Shot setting
                            'dirichlet': Dirichlet's distribution over query data: Realisatic class imbalanced Few-Shot setting
                 alpha : Dirichlet's concentration parameter
 
@@ -30,14 +30,14 @@ class CategoriesSampler():
                              Query data and labels class sequence is :
                                [a a a a a a a a b b b b b b b c c c c c d d d d d e e e e e ...]
     """
-    def __init__(self, label_support, label_query, n_batch, n_cls, num_classes, s_shot, n_query, balanced, used_set_support, alpha = 2):
+    def __init__(self, label_support, label_query, n_batch, n_cls, n_ways, s_shot, n_query, sampling, used_set_support, alpha = 2):
         self.n_batch = n_batch  # the number of iterations in the dataloader
         self.n_cls = n_cls
         self.s_shot = s_shot
         self.n_query = n_query
-        self.balanced = balanced
+        self.sampling = sampling
         self.alpha = alpha
-        self.num_classes = num_classes
+        self.n_ways = n_ways
         self.used_set_support = used_set_support
         
     def create_list_classes(self, label_support, label_query):
@@ -57,7 +57,7 @@ class CategoriesSampler():
             
         self.list_classes = []
         for i_batch in range(self.n_batch):
-            self.list_classes.append(torch.randperm(len(self.m_ind_support))[:self.num_classes])  # random sample num_class indexs
+            self.list_classes.append(torch.randperm(len(self.m_ind_support))[:self.n_ways])  # random sample num_class indexs
         
             
     
@@ -108,7 +108,7 @@ class SamplerQuery:
         self.m_ind_query = cat_samp.m_ind_query
         self.n_query = cat_samp.n_query
         self.alpha = cat_samp.alpha
-        self.balanced = cat_samp.balanced
+        self.sampling = cat_samp.sampling
 
     def __len__(self):
         return self.n_batch
@@ -122,8 +122,8 @@ class SamplerQuery:
             query = []
             
             alpha = self.alpha * np.ones(self.n_cls)
-            assert self.balanced in ['balanced', 'dirichlet', 'uniform']
-            if self.balanced == 'balanced':
+            assert self.sampling in ['balanced', 'dirichlet', 'uniform']
+            if self.sampling == 'balanced':
                 query_samples = np.repeat(self.n_query // self.n_cls, self.n_cls)
                 for c, nb_shot in zip(classes, query_samples):
                     l = self.m_ind_query[c]  # all data indexs of this class
@@ -131,7 +131,7 @@ class SamplerQuery:
                     query.append(l[pos])
                 query = torch.cat(query)
                 
-            elif self.balanced == "dirichlet":
+            elif self.sampling == "dirichlet":
                 sum_pos = 0
                 while sum_pos < self.n_query :
                     query = []
@@ -147,7 +147,7 @@ class SamplerQuery:
                 query = torch.cat(query)
 
                 
-            elif self.balanced == "uniform":
+            elif self.sampling == "uniform":
                 complete_possible_samples = self.m_ind_query[classes[0]]
                 #print("Len class ", len(self.m_ind_query[classes[0]]))
                 for c in classes[1:]:
@@ -193,8 +193,8 @@ def convert_prob_to_samples(prob, n_query):
     return prob.astype(int)
 
 
-def get_dirichlet_query_dist(alpha, n_tasks, n_ways, n_querys):
-    alpha = np.full(n_ways, alpha)
+def get_dirichlet_query_dist(alpha, n_tasks, k_eff, n_querys):
+    alpha = np.full(k_eff, alpha)
     prob_dist = np.random.dirichlet(alpha, n_tasks)
     return convert_prob_to_samples(prob=prob_dist, n_query=n_querys)
 

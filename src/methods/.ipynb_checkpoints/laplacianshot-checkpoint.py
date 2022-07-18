@@ -22,13 +22,13 @@ class LaplacianShot(object):
         self.arch = args.arch
         self.dataset = args.dataset
         self.used_set_support = args.used_set_support
-        self.balanced = args.balanced
+        self.sampling = args.sampling
         self.dataset = args.dataset
         self.proto_rect = args.proto_rect
         self.norm_type = args.norm_type
         self.iter = args.iter
+        self.k_eff = args.k_eff
         self.n_ways = args.n_ways
-        self.num_classes = args.num_classes_test
         self.number_tasks = args.batch_size
         self.model = model
         self.log_file = log_file
@@ -104,7 +104,7 @@ class LaplacianShot(object):
         eta = support.mean(1) - query.mean(1)  # Shifting term
         query = query + eta[:, np.newaxis, :]  # Adding shifting term to each normalized query feature
         query_aug = np.concatenate((support, query), axis=1)  # Augmented set S' (X')
-        support_ = support.reshape(support.shape[0], shot, self.n_ways, support.shape[-1]).mean(1)  # Init basic prototypes Pn
+        support_ = support.reshape(support.shape[0], shot, self.k_eff, support.shape[-1]).mean(1)  # Init basic prototypes Pn
         support_ = torch.from_numpy(support_)
         query_aug = torch.from_numpy(query_aug)
         proto_weights = []
@@ -228,13 +228,13 @@ class LaplacianShot(object):
                             'wideres': {'mini': [1.0, 0.7],
                                     'tiered': [1.0, 0.8]}},
 
-                'balanced': {'resnet18': {'mini': [0.7, 0.3],
+                'sampling': {'resnet18': {'mini': [0.7, 0.3],
                                           'tiered': [0.7, 0.1],
                                           'cub': [0.7, 0.3]},
                              'wideres': {'mini': [0.7, 0.3],
                                      'tiered': [0.7, 0.1]}
                }}
-        return lmd[self.balanced][self.arch][self.dataset]
+        return lmd[self.sampling][self.arch][self.dataset]
 
     def get_lmd(self, shot):
         idx = self.shots.index(shot)
@@ -276,7 +276,7 @@ class LaplacianShot(object):
                 self.logger.info(" ==> Executing proto-rectification ...")
                 support = self.proto_rectification(support=support, query=query, shot=shot)
             else:
-                #support = support.reshape(self.number_tasks, shot, self.n_ways, support.shape[-1]).mean(1)
+                #support = support.reshape(self.number_tasks, shot, self.k_eff, support.shape[-1]).mean(1)
                 one_hot = get_one_hot(y_s)
                 counts = one_hot.sum(1).view(support.size()[0], -1, 1)
                 weights = one_hot.transpose(1, 2).matmul(support)
@@ -302,7 +302,7 @@ class LaplacianShot(object):
                 self.logger.info(" ==> Executing proto-rectification ...")
                 support = self.proto_rectification(support=support, query=query, shot=shot)
             else:
-                support = support.reshape(self.number_tasks, shot, self.num_classes, support.shape[-1]).mean(1)
+                support = support.reshape(self.number_tasks, shot, self.n_ways, support.shape[-1]).mean(1)
 
         # Run adaptation
         self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
@@ -340,7 +340,7 @@ class LaplacianShot(object):
             if self.dataset == 'inatural' and self.used_set_support == 'repr':
                 y_s_i = np.unique(y_s[i])
             else:
-                y_s_i = y_s.numpy().squeeze(2)[i, :self.num_classes]
+                y_s_i = y_s.numpy().squeeze(2)[i, :self.n_ways]
             preds, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=lmd, y_s=y_s_i, y_q=y_q, task_i=i,
                                                 bound_iteration=self.iter)
             q_shot = len(preds)
@@ -348,7 +348,7 @@ class LaplacianShot(object):
             ground_truth = list(y_q[i].reshape(q_shot))
             #preds = list(preds.reshape(q_shot))
             acc = (y_q[i].reshape(q_shot) == preds).mean()
-            union = list(range(self.num_classes))
+            union = list(range(self.n_ways))
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.record_info(acc=acc, f1=f1, ent_energy=ent_energy, new_time=times)
-            union = list(range(self.num_classes))
+            union = list(range(self.n_ways))

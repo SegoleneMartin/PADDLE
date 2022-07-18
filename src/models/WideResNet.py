@@ -44,7 +44,7 @@ class wide_basic(nn.Module):
 
 
 class Wide_ResNet(nn.Module):
-    def __init__(self, depth, widen_factor, dropout_rate, num_classes):
+    def __init__(self, depth, widen_factor, dropout_rate, num_classes_train):
         super(Wide_ResNet, self).__init__()
         self.in_planes = 16
 
@@ -61,7 +61,7 @@ class Wide_ResNet(nn.Module):
         self.layer3 = self._wide_layer(wide_basic, nStages[3], n, dropout_rate, stride=2)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear = nn.Linear(nStages[3], num_classes)
+        self.linear = nn.Linear(nStages[3], num_classes_train)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -99,10 +99,10 @@ class Wide_ResNet(nn.Module):
         return out1
 
 
-def wideres(num_classes):
+def wideres(num_classes_train):
     """Constructs a wideres-28-10 model without dropout.
     """
-    return Wide_ResNet(28, 10, 0, num_classes)
+    return Wide_ResNet(28, 10, 0, num_classes_train)
 
 
 if __name__ == '__main__':

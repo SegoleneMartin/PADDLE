@@ -15,8 +15,8 @@ import copy
 import requests
 
 def get_one_hot(y_s):
-    num_classes = torch.unique(y_s).size(0)
-    eye = torch.eye(num_classes).to(y_s.device)
+    n_ways = torch.unique(y_s).size(0)
+    eye = torch.eye(n_ways).to(y_s.device)
     one_hot = []
     for y_task in y_s:
         one_hot.append(eye[y_task].unsqueeze(0))
@@ -293,13 +293,16 @@ def merge_cfg_from_list(cfg: CfgNode,
     assert len(cfg_list) % 2 == 0, cfg_list
     for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
         subkey = full_key.split('.')[-1]
-        assert subkey in cfg, 'Non-existent key: {}'.format(full_key)
-        value = _decode_cfg_value(v)
-        value = _check_and_coerce_cfg_value_type(
-            value, cfg[subkey], subkey, full_key
-        )
-        setattr(new_cfg, subkey, value)
-
+        #assert subkey in cfg, 'Non-existent key: {}'.format(full_key)
+        if subkey in cfg:
+            value = _decode_cfg_value(v)
+            value = _check_and_coerce_cfg_value_type(
+                value, cfg[subkey], subkey, full_key
+            )
+            setattr(new_cfg, subkey, value)
+        else:
+            value = _decode_cfg_value(v)
+            setattr(new_cfg, subkey, value)
     return new_cfg
 
 class Logger:
@@ -354,17 +357,17 @@ class Logger:
     def exception(self, msg):
         self.logger.exception(msg)
 
-def make_log_dir(log_path, dataset, backbone, method, balanced, alpha_dirichlet):
-    log_dir = os.path.join(log_path, dataset, backbone, balanced, 'alpha_'+str(alpha_dirichlet), method)
+def make_log_dir(log_path, dataset, backbone, method, sampling, alpha_dirichlet):
+    log_dir = os.path.join(log_path, dataset, backbone, sampling, 'alpha_'+str(alpha_dirichlet), method)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
     return log_dir
 
-def get_log_file(log_path, dataset, backbone, method, balanced, alpha_dirichlet):
-    if balanced == 'balanced':
-        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, balanced=balanced, method=method)
+def get_log_file(log_path, dataset, backbone, method, sampling, alpha_dirichlet):
+    if sampling == 'balanced':
+        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, method=method)
     else :
-        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, balanced=balanced, alpha_dirichlet=alpha_dirichlet, method=method)
+        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, alpha_dirichlet=alpha_dirichlet, method=method)
     i = 0
     filename = os.path.join(log_dir, '{}_run_{}.log'.format(method, i))
     while os.path.exists(os.path.join(log_dir, '{}_run_%s.log'.format(method)) % i):

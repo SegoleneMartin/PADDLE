@@ -22,7 +22,7 @@ class TIM(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.init_info_lists()
-        self.num_classes = args.num_classes_test
+        self.n_ways = args.n_ways
         self.dataset = args.dataset
         self.used_set_support = args.used_set_support
 
@@ -127,7 +127,7 @@ class TIM(object):
         n_tasks, q_shot = preds_q.size()
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
-        union = list(range(self.num_classes))
+        union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
             preds = list(preds_q[i].reshape(q_shot).cpu().numpy())

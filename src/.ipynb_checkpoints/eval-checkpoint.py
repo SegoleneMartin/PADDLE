@@ -1,8 +1,8 @@
 import numpy as np
 from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features_simple
 from src.methods.tim import ALPHA_TIM, TIM_GD
-from src.methods.km_unbiased import KM_UNBIASED
-from src.methods.km import KM_BIASED
+from src.methods.paddle import PADDLE
+from src.methods.soft_km import SOFT_KM
 from src.methods.ici import ICI
 from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
@@ -69,7 +69,7 @@ class Evaluator:
             model_path : Where was the model loaded from
             model_tag : Which model ('final' or 'best') to load
             used_set : Set used between 'test' and 'val'
-            n_ways : Number of ways for the task
+            k_eff : Number of ways for the task
 
         returns :
             extracted_features_dic : Dictionnary containing all extracted features and labels
@@ -177,11 +177,11 @@ class Evaluator:
             results_task = []
             results_task_F1 = []
             for i in range(int(self.args.number_tasks/self.args.batch_size)):
-                #n_ways = random.randint(self.args.n_ways_min, self.args.n_ways_max)
-                n_ways = self.args.n_ways
+                #k_eff = random.randint(self.args.k_eff_min, self.args.k_eff_max)
+                k_eff = self.args.k_eff
                 sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
-                                        n_ways, self.args.num_classes_test, shot, self.args.n_query, 
-                                        self.args.balanced, self.args.used_set_support, self.args.alpha_dirichlet)
+                                        k_eff, self.args.n_ways, shot, self.args.n_query, 
+                                        self.args.sampling, self.args.used_set_support, self.args.alpha_dirichlet)
                 sampler.create_list_classes(all_labels_support, all_labels_query)
                 sampler_support = SamplerSupport(sampler)
                 sampler_query = SamplerQuery(sampler)
@@ -201,7 +201,7 @@ class Evaluator:
                 #test_loader_query = get_dataloader(sets=dataset['query'], args=self.args,
                 #                             sampler=sampler_query, pin_memory=False)
       
-                task_generator = Tasks_Generator(n_ways=n_ways, num_classes=self.args.num_classes_test, shot=shot, n_query=self.args.n_query, loader_support=test_loader_support, loader_query=test_loader_query, train_mean=train_mean, log_file=self.log_file)
+                task_generator = Tasks_Generator(k_eff=k_eff, n_ways=self.args.n_ways, shot=shot, n_query=self.args.n_query, loader_support=test_loader_support, loader_query=test_loader_query, train_mean=train_mean, log_file=self.log_file)
               
                 method = self.get_method_builder(model=model)
 
@@ -225,9 +225,9 @@ class Evaluator:
 
         if self.args.method == 'ALPHA-TIM':
             param = self.args.alpha_values[1]
-        elif self.args.method == 'KM-UNBIASED':
+        elif self.args.method == 'PADDLE':
             param = self.args.alpha
-        elif self.args.method == 'KM-BIASED':
+        elif self.args.method == 'SOFT-KM':
             param = self.args.alpha
         elif self.args.method == 'LaplacianShot':
             param = self.args.lmd[0]
@@ -251,7 +251,7 @@ class Evaluator:
             else:
                 f = open(name_file_1, 'w')
                 
-            f.write(str(self.args.n_ways)+'\t')
+            f.write(str(self.args.k_eff)+'\t')
             #f.write(str(param)+'\t')
             self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
                                                                                    mean_accuracies[self.args.shots.index(shot)]))
@@ -274,10 +274,10 @@ class Evaluator:
         method_info = {'model': model, 'device': self.device, 'log_file': self.log_file, 'args': self.args}
         if self.args.method == 'ALPHA-TIM':
             method_builder = ALPHA_TIM(**method_info)
-        elif self.args.method == 'KM-UNBIASED':
-            method_builder = KM_UNBIASED(**method_info)
-        elif self.args.method == 'KM-BIASED':
-            method_builder = KM_BIASED(**method_info)
+        elif self.args.method == 'PADDLE':
+            method_builder = PADDLE(**method_info)
+        elif self.args.method == 'SOFT-KM':
+            method_builder = SOFT_KM(**method_info)
         elif self.args.method == 'TIM-GD':
             method_builder = TIM_GD(**method_info)
         elif self.args.method == 'LaplacianShot':
@@ -291,6 +291,6 @@ class Evaluator:
         elif self.args.method == 'ICI':
             method_builder = ICI(**method_info)
         else:
-            self.logger.exception("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
-            raise ValueError("Method must be in ['KM_UNBIASED', 'KM_BIASED', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            self.logger.exception("Method must be in ['PADDLE', 'SOFT_KM', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            raise ValueError("Method must be in ['PADDLE', 'SOFT_KM', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
         return method_builder
