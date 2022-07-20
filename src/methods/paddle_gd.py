@@ -14,7 +14,7 @@ from copy import deepcopy
 from .paddle import KM
 
 
-class KM_UNBIASED_GD(KM):
+class PADDLE_GD(KM):
     def __init__(self, model, device, log_file, args):
         self.device = device
         self.iter = args.iter

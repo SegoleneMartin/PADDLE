@@ -8,7 +8,6 @@ import torch.utils.data
 import torch.utils.data.distributed
 torch.cuda.empty_cache()
 #from visdom_logger import VisdomLogger
-# test comment
 from src.utils import warp_tqdm, save_checkpoint, load_cfg_from_cfg_file, merge_cfg_from_list, Logger, get_log_file
 from src.trainer import Trainer
 from src.eval import Evaluator

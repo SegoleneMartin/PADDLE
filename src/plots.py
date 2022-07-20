@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-list_methods = ['PADDLE', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'PADDLE-GD', 'LaplacianShot']
+list_methods = ['PADDLE', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'SOFT_KM', 'LaplacianShot']
 list_name = [r'\textsc{PADDLE}', r'\textsc{TIM}', r'$\alpha$-\textsc{TIM}',
              'Baseline', r'\textsc{BDCSPN}', r'\textsc{PGD}', 'LaplacianShot']
 markers = ["^", ".", "v", "1", "p", "*", "X", "d", "P", "<", ">"]
@@ -59,11 +59,6 @@ pretty["wideres"] = "WRN 28-10"
 blue = '#2CBDFE'
 pink = '#F3A0F2'
 
-
-# def moving_average(a, n=3) :
-#     ret = np.cumsum(a, dtype=float)
-#     ret[n:] = ret[n:] - ret[:-n]
-#     return ret[n - 1:] / n
 
 def moving_average(x, w):
     return np.convolve(x, np.ones(w), 'valid') / w
@@ -164,6 +159,8 @@ def benchmark_plot(args):
     n_datasets = len(args.datasets)
     n_archs = len(args.archs)
     assert n_datasets and n_archs
+    if len(args.shots) == 'None': # for inatural
+        args.shots = [1]
     fig, axes = plt.subplots(figsize=(8 * len(args.shots), 6 * n_datasets * n_archs),
                              ncols=len(args.shots),
                              nrows=n_datasets * n_archs,
@@ -177,18 +174,21 @@ def benchmark_plot(args):
             max_ = 0.
             for k, shot in enumerate(args.shots):
                 if isinstance(axes, np.ndarray):
-                    ax = axes[i * n_archs + j, k]
+                    if n_datasets * n_archs > 1:
+                        ax = axes[i * n_archs + j, k]
+                    else:
+                        ax = axes[k]
                 else:
                     ax = axes
                 ax.spines["right"].set_visible(False)
                 ax.spines["top"].set_visible(False)
                 for method_index, method in enumerate(list_methods):
-                    file_path = folder / f'{method}_alpha1_shots{shot}.txt'
+                    file_path = folder / f'{method}.txt'
                     if file_path.exists():
                         logger.warning(file_path)
                         tab = np.genfromtxt(file_path, dtype=float, delimiter='\t')
                         list_classes = tab[:, 0]
-                        list_acc = tab[:, 1]
+                        list_acc = tab[:, k + 1]
                         keep_index = list_classes <= 10
                         ax.plot(list_classes[keep_index], list_acc[keep_index],
                                 marker=markers[method_index],

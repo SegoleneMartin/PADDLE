@@ -3,7 +3,7 @@ from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, L
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.paddle import PADDLE
 from src.methods.soft_km import SOFT_KM
-from src.methods.paddle_gd import KM_UNBIASED_GD
+from src.methods.paddle_gd import PADDLE_GD
 from src.methods.ici import ICI
 from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
@@ -197,9 +197,9 @@ class Evaluator:
             param = self.args.temp
             
         self.logger.info('----- Final test results -----')
-        ### If in tuning mode ###
+        ### If in parameter tuning mode ###
         if self.args.tune_parameters == True:
-            path = 'results/{}/{}'.format(self.args.dataset, self.args.arch)
+            path = 'results/params/{}/{}'.format(self.args.dataset, self.args.arch)
             name_file = path + '/{}.txt'.format(self.args.method)
 
             if not os.path.exists(path):
@@ -219,31 +219,25 @@ class Evaluator:
 
         ### If in testing mode ###
         else:
+            path = 'results/test/{}/{}'.format(self.args.dataset, self.args.arch)
+            name_file = path + '/{}.txt'.format(self.args.method)
+            if not os.path.exists(path):
+                os.makedirs(path)
+            if os.path.isfile(name_file) == True:
+                f = open(name_file, 'a')
+                print('Adding to already existing .txt file to avoid overwritting')
+            else:
+                f = open(name_file, 'w')
+    
+            f.write(str(self.args.k_eff)+'\t')
             for shot in self.args.shots:
-                name_file = 'results_test/{}/{}/{}_shots{}.txt'.format(self.args.dataset, self.args.arch, self.args.method, shot)
 
-                if not os.path.exists('results_test/{}/{}'.format(self.args.dataset, self.args.arch)):
-                    os.makedirs('results_test/{}/{}'.format(self.args.dataset, self.args.arch))
-                if os.path.isfile(name_file) == True:
-                    f = open(name_file, 'a')
-                else:
-                    f = open(name_file, 'w')
-                    
-                f.write(str(self.args.k_eff)+'\t')
                 self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
                                                                                     mean_accuracies[self.args.shots.index(shot)]))
-                self.logger.info('{}-shot mean F1 score over {} tasks: {}'.format(shot, self.args.number_tasks,
-                                                                                    mean_F1s[self.args.shots.index(shot)]))
                 f.write(str(round(100*mean_accuracies[self.args.shots.index(shot)], 1)) +'\t' )
-                f.write(str(round(100*mean_F1s[self.args.shots.index(shot)], 1)) +'\t' )
-
+            f.write('\n')
             f.close()
                 
-        
-        #self.logger.info('----- Final test results -----')
-        #for shot in self.args.shots:
-        #    self.logger.info('{}-shot mean test accuracy over {} tasks: {}'.format(shot, self.args.number_tasks,
-        #                                                                           mean_accuracies[self.args.shots.index(shot)]))
         return mean_accuracies
 
     def get_method_builder(self, model):
@@ -270,8 +264,8 @@ class Evaluator:
         elif self.args.method == 'ICI':
             method_builder = ICI(**method_info)
         elif self.args.method == 'PADDLE-GD':
-            method_builder = KM_UNBIASED_GD(**method_info)
+            method_builder = PADDLE_GD(**method_info)
         else:
-            self.logger.exception("Method must be in ['PADDLE', 'KM_UNBIASED_GD', 'SOFT_KM', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
+            self.logger.exception("Method must be in ['PADDLE', 'PADDLE_GD', 'SOFT_KM', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
             raise ValueError("Method must be in ['PADDLE', 'SOFT_KM', 'TIM_GD', 'ICI', ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")
         return method_builder

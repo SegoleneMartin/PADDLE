@@ -3,6 +3,8 @@ shots=[5]
 tune_parameters=True
 arch='resnet18'
 dataset='mini'
+used_set_support='val'
+used_set_query='val'
 
 ### TIM ###
 for value in [1.0,0.1,1.0] [1.0,0.15,1.0] [1.0,0.2,1.0] [1.0,0.25,1.0] [1.0,0.3,1.0] \
@@ -41,11 +43,5 @@ for value in 2 3 4 5 6 7 8 9 10 11
 do
 python -m main --opts dataset ${dataset} arch ${arch} sampling ${sampling} shots ${shots} \
 tune_params ${tune_params} method ici d ${value}
-done
-### BASELINE++ ###
-for value in 0.1 0.5 1 2 4 6 8 11 14 17
-do
-python -m main --opts dataset ${dataset} arch ${arch} sampling ${sampling} shots ${shots} \
-tune_params ${tune_params} method baseline_pp temp ${value}
 done
 
