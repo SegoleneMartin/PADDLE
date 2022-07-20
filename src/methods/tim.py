@@ -10,6 +10,8 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.optimize import linear_sum_assignment
+from copy import deepcopy
+
 
 class TIM(object):
     def __init__(self, model, device, log_file, args):
@@ -154,6 +156,7 @@ class TIM(object):
     def get_logs(self):
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
         self.test_F1 = np.array([self.test_F1])
+        self.criterions = torch.stack(self.criterions, dim=0).detach().cpu().numpy()
         self.cond_entropy = torch.cat(self.cond_entropy, dim=1).cpu().numpy()
         self.entropy = torch.cat(self.entropy, dim=1).cpu().numpy()
         self.mutual_infos = torch.cat(self.mutual_infos, dim=1).cpu().numpy()

@@ -37,9 +37,9 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-list_methods = ['PADDLE', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'SOFT_KM', 'LaplacianShot']
+list_methods = ['PADDLE', 'TIM-GD', 'ALPHA-TIM', 'Baseline', 'BDCSPN', 'SOFT_KM', 'LaplacianShot', 'PADDLE-GD']
 list_name = [r'\textsc{PADDLE}', r'\textsc{TIM}', r'$\alpha$-\textsc{TIM}',
-             'Baseline', r'\textsc{BDCSPN}', r'\textsc{PGD}', 'LaplacianShot']
+             'Baseline', r'\textsc{BDCSPN}', r'\textsc{Soft K-Means}', 'LaplacianShot', r'\textsc{PGD}']
 markers = ["^", ".", "v", "1", "p", "*", "X", "d", "P", "<", ">"]
 colors = ["#f02d22",
 "#90813d",
@@ -103,25 +103,25 @@ def convergence_plot(args):
                     logger.info('\t'.join(msg))
 
                     if criterion_defined:
-                        n = index_convergence
+                        n = 100
                         #ysmooth = moving_average(y, n)
                         # print(x)
-                        print(x[:-index_convergence+1])
-                        print(y[:-index_convergence+1])
-                        ax.plot(x[:-n+1], y[:-n+1],
+                        #print(x[:-index_convergence+1])
+                        #print(y[:-index_convergence+1])
+                        ax.plot(x[:-50], y[:-50],
                                 label=list_name[method_index],
                                 color=colors[method_index],
                                 marker=markers[method_index],
                                 markersize=10,
                                 linewidth=3,
-                                markevery=1)
+                                markevery=100)
 
                     # ax.fill_between(x, criterion['mean'] - criterion['std'], 
                     #                 criterion['mean'] + criterion['std'],
                     #                 color=colors[method_index], alpha=0.4)
                     ax.set_ylabel(r"$\| \boldsymbol{W}^{(\ell+1)} - \boldsymbol{W}^{(\ell)} \|^2$")
                     ax.set_yscale('log')
-                    #ax.set_xscale('log')
+                    ax.set_xscale('log')
                     ax.set_xlabel("Elapsed time (s)")
                     # ax.set_ylim(7e-8, 1e-1)
 

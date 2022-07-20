@@ -1,6 +1,6 @@
 METHOD:
   method: 'PADDLE-GD'
-  iter: 5
+  iter: 3000
   lr: 0.0001
   alpha: 75
 
