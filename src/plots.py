@@ -75,22 +75,17 @@ def convergence_plot(args):
                 logger.info(methods)
                 for method in methods:
                     method_index = list_methods.index(method)
-                    u = np.loadtxt(ospjoin(folder, f'{method}.txt'))
-                    print(u)
-                    with open(ospjoin(folder, method, f'.txt'), 'rb') as f:
-                        x = pickle.load(f)['mean']
+                    name_file = ospjoin(folder, f'{method}.txt')
+                    if os.path.isfile(name_file) == True:
+                        x, y = np.loadtxt(name_file)
                         x = np.cumsum(x)
-                    criterion_path = ospjoin(folder, method, f'criterion_{shot}.pkl')
-                    if os.path.exists(criterion_path):
+                        print("x", x.shape)
+                        print("y", y.shape)
                         criterion_defined = True
-                        with open(criterion_path, 'rb') as f:
-                            y = pickle.load(f)['mean']
                     else:
-                        break
                         logger.warning(f"Criterion not defined for {method}")
                         criterion_defined = False
-                    with open(ospjoin(folder, method, f'full_acc_{shot}.pkl'), 'rb') as f:
-                        acc = pickle.load(f)['mean']
+                        break
 
                     # Criterion axis 
                     ax.spines["top"].set_visible(False)
@@ -99,34 +94,34 @@ def convergence_plot(args):
                     msg = [str(method)]
                     if criterion_defined:
                         index_convergence = np.where(y < args.criterion_threshold)[0]
+                        print(index_convergence)
                         if len(index_convergence):
                             index_convergence = index_convergence[0]
                             time_to_convergence = x[index_convergence]
                             msg.append(f"Time to convergence = {time_to_convergence}")
-                            msg.append(f"Acc {np.round(acc[index_convergence], 2)}")
-                        else:
-                            msg.append(f"Acc {np.round(acc[-1], 2)}")
-
+                    
                     logger.info('\t'.join(msg))
 
                     if criterion_defined:
-                        n = 50
-                        ysmooth = moving_average(y, n)
+                        n = index_convergence
+                        #ysmooth = moving_average(y, n)
                         # print(x)
-                        ax.plot(x[:-n+1], ysmooth,
+                        print(x[:-index_convergence+1])
+                        print(y[:-index_convergence+1])
+                        ax.plot(x[:-n+1], y[:-n+1],
                                 label=list_name[method_index],
                                 color=colors[method_index],
                                 marker=markers[method_index],
                                 markersize=10,
                                 linewidth=3,
-                                markevery=100)
+                                markevery=1)
 
                     # ax.fill_between(x, criterion['mean'] - criterion['std'], 
                     #                 criterion['mean'] + criterion['std'],
                     #                 color=colors[method_index], alpha=0.4)
                     ax.set_ylabel(r"$\| \boldsymbol{W}^{(\ell+1)} - \boldsymbol{W}^{(\ell)} \|^2$")
                     ax.set_yscale('log')
-                    ax.set_xscale('log')
+                    #ax.set_xscale('log')
                     ax.set_xlabel("Elapsed time (s)")
                     # ax.set_ylim(7e-8, 1e-1)
 
