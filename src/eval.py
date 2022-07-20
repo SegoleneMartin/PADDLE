@@ -199,12 +199,15 @@ class Evaluator:
         self.logger.info('----- Final test results -----')
         if self.args.ablation == True:
             path = 'results/ablation'.format(self.args.dataset, self.args.arch)
-            name_file = path + '/{}.plk'.format(self.args.method)
+            name_file = path + '/{}.txt'.format(self.args.method)
             #name_file_criterions = path + '/criterions_{}.plk'.format(self.args.method)
-            if hasattr(logs, 'criterions'):
+            print('1', logs.keys())
+            if 'criterions' in logs:
+                print("2", logs.keys())
                 if not os.path.exists(path):
                     os.makedirs(path)
-                np.savetxt(name_file, (logs['timestamps'][0, :], logs['criterions'][0, :]))            
+                #print(logs['criterions'])
+                np.savetxt(name_file, (np.array(logs['timestamps']), np.array(logs['criterions'][:, 0])))            
 
         ### If in parameter tuning mode ###
         if self.args.tune_parameters == True:

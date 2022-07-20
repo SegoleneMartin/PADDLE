@@ -132,6 +132,7 @@ class KM(object):
 
     def get_logs(self):
         self.test_F1 = np.array([self.test_F1])
+        self.criterions = torch.stack(self.criterions, dim=0).cpu().numpy()
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
         return {'timestamps': self.timestamps, 'criterions':self.criterions,
                 'acc': self.test_acc, 'F1': self.test_F1, 'losses': self.losses}

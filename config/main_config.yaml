@@ -2,7 +2,7 @@ EVAL:
     dataset: 'mini'
     arch: 'resnet18'
     evaluate: True      # Set to True to evaluate methods
-    method: 'soft_km' # ('paddle', 'paddle_gd', 'tim', 'alpha_tim', 'bdcspn', 'laplacianshot', 'ici', 'pt_map', 'baseline', 'soft_km')
+    method: 'paddle' # ('paddle', 'paddle_gd', 'tim', 'alpha_tim', 'bdcspn', 'laplacianshot', 'ici', 'pt_map', 'baseline', 'soft_km')
     number_tasks: 2 # Number of tasks to evaluate
     batch_size: 2
     k_eff: 5  # number of different classes represented in the query
@@ -18,3 +18,4 @@ EVAL:
     fresh_start: False
     convergence_ablation: False
     tune_parameters: False
+    ablation: True

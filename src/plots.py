@@ -68,14 +68,16 @@ def convergence_plot(args):
     for i, dataset in enumerate(args.datasets):
         for j, arch in enumerate(args.archs):
             for k, shot in enumerate(args.shots):
-                folder = ospjoin(args.root, dataset, arch)
+                folder = ospjoin(args.root)
                 _ = plt.Figure(figsize=(1, 1), dpi=300)
                 ax = plt.gca()
-                methods = [x for x in os.listdir(folder)]
+                methods = [x[:-4] for x in os.listdir(folder)]
                 logger.info(methods)
                 for method in methods:
                     method_index = list_methods.index(method)
-                    with open(ospjoin(folder, method, f'times_{shot}.pkl'), 'rb') as f:
+                    u = np.loadtxt(ospjoin(folder, f'{method}.txt'))
+                    print(u)
+                    with open(ospjoin(folder, method, f'.txt'), 'rb') as f:
                         x = pickle.load(f)['mean']
                         x = np.cumsum(x)
                     criterion_path = ospjoin(folder, method, f'criterion_{shot}.pkl')
