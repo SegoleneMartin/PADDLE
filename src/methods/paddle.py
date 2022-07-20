@@ -8,6 +8,8 @@ import time
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
+from copy import deepcopy
+
 
 class KM(object):
     def __init__(self, model, device, log_file, args):
@@ -23,6 +25,7 @@ class KM(object):
 
     def init_info_lists(self):
         self.timestamps = []
+        self.criterions = []
         self.test_acc = []
         self.losses = []
         self.test_F1 = []
@@ -95,8 +98,19 @@ class KM(object):
         weights = one_hot.transpose(1, 2).matmul(support)
         self.weights = weights / counts
 
+    def record_convergence(self, new_time, criterions):
+        """
+        inputs:
+            support : torch.Tensor of shape [n_task, s_shot, feature_dim]
+            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
+            y_s : torch.Tensor of shape [n_task, s_shot]
+            y_q : torch.Tensor of shape [n_task, q_shot] :
+        """
+        self.criterions.append(criterions)
+        self.timestamps.append(new_time)
+
     
-    def record_info(self, new_time, y_q):
+    def record_info(self, y_q):
         """
         inputs:
             support : torch.Tensor of shape [n_task, s_shot, feature_dim]
@@ -106,9 +120,9 @@ class KM(object):
         """
         preds_q = self.p.argmax(2)
         n_tasks, q_shot = preds_q.size()
-        self.timestamps.append(new_time)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
+
         union = list(range(self.n_ways))
         for i in range(n_tasks):
             ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
@@ -119,7 +133,7 @@ class KM(object):
     def get_logs(self):
         self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
-        return {'timestamps': self.timestamps,
+        return {'timestamps': self.timestamps, 'criterions':self.criterions,
                 'acc': self.test_acc, 'F1': self.test_F1, 'losses': self.losses}
 
     def run_task(self, task_dic, shot):
@@ -208,19 +222,23 @@ class PADDLE(KM):
         """
         self.logger.info(" ==> Executing PADDLE with LAMBDA = {}".format(self.alpha))
         
-        t0 = time.time()
         y_s_one_hot = get_one_hot(y_s)
         n_task, n_ways = y_s_one_hot.size(0), y_s_one_hot.size(2)
         self.v = torch.zeros(n_task, n_ways).to(self.device)
 
         for i in tqdm(range(self.iter)):
+            t0 = time.time()
             self.p_update(query)
             self.v_update()
+            weights_old = deepcopy(self.weights.detach())
             self.weights_update(support, query, y_s_one_hot)
+            weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
+            criterions = weight_diff
+            t1 = time.time()
+            self.record_convergence(new_time=t1-t0, criterions=criterions)
+            
 
-        t1 = time.time()
-        self.record_info(new_time=t1-t0, y_q=y_q)
-        t0 = time.time()
+        self.record_info(y_q=y_q)
         
 class MinMaxScaler(object):
     """MinMax Scaler

@@ -47,20 +47,17 @@ class PADDLE_GD(KM):
 
         # Initialize p
         self.p = (- self.get_logits(query)).softmax(-1)
-        self.record_info(new_time=0., y_q=y_q, query=query, criterions=None)
-
         self.p.requires_grad_()
         self.weights.requires_grad_()
         optimizer = torch.optim.Adam([self.weights, self.p], lr=self.lr)
 
         all_samples = torch.cat([support, query], 1)
-
-        t0 = time.time()
         for i in tqdm(range(self.iter)):
-
             # old_loss = loss.item()
             # p_old = deepcopy(self.p.detach())
             weights_old = deepcopy(self.weights.detach())
+            t0 = time.time()
+            
             # Data fitting term
             l2_distances = torch.cdist(all_samples, self.weights) ** 2  # [n_tasks, ns + nq, K]
             all_p = torch.cat([y_s_one_hot.float(), self.p.float()], dim=1) # [n_task s, ns + nq, K]
@@ -80,38 +77,12 @@ class PADDLE_GD(KM):
             # Projection
             with torch.no_grad():
                 self.p = self.simplex_project(self.p)
-                t1 = time.time()
                 weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
                 criterions = weight_diff
-                self.record_info(new_time=t1-t0, y_q=y_q, query=query, criterions=criterions)
-                t0 = time.time()
+                t1 = time.time()
+                self.record_convergence(new_time=t1-t0, criterions=criterions)
+            self.record_info(y_q=y_q)
 
-    def record_info(self, new_time, y_q, criterions, query):
-        """
-        inputs:
-            support : torch.Tensor of shape [n_task, s_shot, feature_dim]
-            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
-            y_s : torch.Tensor of shape [n_task, s_shot]
-            y_q : torch.Tensor of shape [n_task, q_shot]
-            criterion: [n_tasks]
-        """
-        preds_q = (- self.get_logits(query)).argmax(-1)
-        n_tasks, q_shot = preds_q.size()
-        self.timestamps.append(new_time)
-        accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
-        self.test_acc.append(accuracy)
-        union = list(range(self.n_ways))
-        if criterions is None:
-            self.criterions.append(torch.ones(n_tasks).to(self.device))
-        else:
-            self.criterions.append(criterions)
-
-        for i in range(n_tasks):
-            ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
-            preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            #union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.test_F1.append(f1)
 
     def simplex_project(self, p: torch.Tensor, l=1.0):
         """

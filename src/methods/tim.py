@@ -31,6 +31,7 @@ class TIM(object):
 
     def init_info_lists(self):
         self.timestamps = []
+        self.criterions = []
         self.mutual_infos = []
         self.entropy = []
         self.cond_entropy = []
@@ -134,10 +135,21 @@ class TIM(object):
             f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
             self.test_F1.append(f1)
         
-        self.timestamps.append(new_time)
+        #self.timestamps.append(new_time)
         self.mutual_infos.append(get_mi(probs=q_probs))
         self.entropy.append(get_entropy(probs=q_probs.detach()))
         self.cond_entropy.append(get_cond_entropy(probs=q_probs.detach()))
+
+    def record_convergence(self, new_time, criterions):
+        """
+        inputs:
+            support : torch.Tensor of shape [n_task, s_shot, feature_dim]
+            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
+            y_s : torch.Tensor of shape [n_task, s_shot]
+            y_q : torch.Tensor of shape [n_task, q_shot] :
+        """
+        self.criterions.append(criterions)
+        self.timestamps.append(new_time)
 
     def get_logs(self):
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
@@ -147,7 +159,7 @@ class TIM(object):
         self.mutual_infos = torch.cat(self.mutual_infos, dim=1).cpu().numpy()
         return {'timestamps': self.timestamps, 'mutual_info': self.mutual_infos,
                 'entropy': self.entropy, 'cond_entropy': self.cond_entropy,
-                'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1}
+                'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1, 'criterions':self.criterions}
 
     def run_adaptation(self, support, query, y_s, y_q):
         """
@@ -284,6 +296,8 @@ class ALPHA_TIM(TIM):
         self.model.train()
 
         for i in tqdm(range(self.iter)):
+            weights_old = deepcopy(self.weights.detach())
+            t0 = time.time()
             logits_s = self.get_logits(support)
             logits_q = self.get_logits(query)
 
@@ -321,11 +335,14 @@ class ALPHA_TIM(TIM):
             loss.backward()
             optimizer.step()
 
-            t1 = time.time()
             self.model.eval()
 
             self.model.train()
-            t0 = time.time()
+            t1 = time.time()
+            
+            weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
+            criterions = weight_diff
+            self.record_convergence(new_time=t1-t0, criterions=criterions)
         self.record_info(new_time=t1-t0,
                              support=support,
                              query=query,

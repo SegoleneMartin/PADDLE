@@ -197,6 +197,15 @@ class Evaluator:
             param = self.args.temp
             
         self.logger.info('----- Final test results -----')
+        if self.args.ablation == True:
+            path = 'results/ablation'.format(self.args.dataset, self.args.arch)
+            name_file = path + '/{}.plk'.format(self.args.method)
+            #name_file_criterions = path + '/criterions_{}.plk'.format(self.args.method)
+            if hasattr(logs, 'criterions'):
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                np.savetxt(name_file, (logs['timestamps'][0, :], logs['criterions'][0, :]))            
+
         ### If in parameter tuning mode ###
         if self.args.tune_parameters == True:
             path = 'results/params/{}/{}'.format(self.args.dataset, self.args.arch)
