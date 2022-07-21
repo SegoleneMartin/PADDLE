@@ -1,5 +1,5 @@
 METHOD:
-  method: 'ALPHA-TIM'
+  name_method: 'ALPHA-TIM'
   temp: 15
   loss_weights: [1.0, 1.0, 1.0]  # [Xent, H(Y), H(Y|X)]
   lr_alpha_tim: 1e-4

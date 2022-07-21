@@ -22,7 +22,7 @@ tune_parameters ${tune_parameters} method alpha_tim alpha_values ${value}
 done
 ### BDSCPN ###
 for value in for value in 5 8 10 15 20 30 50 70 100 120
-do
+doget_log_file
 python -m main --opts dataset ${dataset} arch ${arch} sampling ${sampling} shots ${shots} \
 tune_parameters ${tune_parameters} method bdcspn temp ${value}
 done

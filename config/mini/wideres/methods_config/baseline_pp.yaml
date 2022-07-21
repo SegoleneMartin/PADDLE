@@ -1,5 +1,5 @@
 METHOD:
-  method: 'Baseline++'
+  name_method: 'Baseline++'
   temp: 0.5
   lr_baseline: 1e-3
   iter: 100

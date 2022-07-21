@@ -1,4 +1,4 @@
 METHOD:
-  method: 'SOFT-KM'
+  name_method: 'SOFT-KM'
   iter: 100
   alpha: 0

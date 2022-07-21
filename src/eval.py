@@ -82,7 +82,7 @@ class Evaluator:
         returns :
             results : List of the mean accuracy for each number of support shots
         """
-        self.logger.info("=> Runnning full evaluation with method: {}".format(self.args.method))
+        self.logger.info("=> Runnning full evaluation with method: {}".format(self.args.name_method))
         load_checkpoint(model=model, model_path=self.args.ckpt_path, type=self.args.model_tag)
         dataset = {}
         loader_info = {'aug': False, 'out_name': False}
@@ -170,32 +170,32 @@ class Evaluator:
         mean_accuracies = np.asarray(results).mean(1)
         mean_F1s = np.asarray(results_F1).mean(1)
 
-        if self.args.method == 'ALPHA-TIM':
+        if self.args.name_method == 'ALPHA-TIM':
             param = self.args.alpha_values[1]
-        elif self.args.method == 'PADDLE':
+        elif self.args.name_method == 'PADDLE':
             param = self.args.alpha
-        elif self.args.method == 'SOFT-KM':
+        elif self.args.name_method == 'SOFT-KM':
             param = self.args.alpha
-        elif self.args.method == 'LaplacianShot':
+        elif self.args.name_method == 'LaplacianShot':
             param = self.args.lmd
-        elif self.args.method == 'Baseline':
+        elif self.args.name_method == 'Baseline':
             param = self.args.iter
-        elif self.args.method == 'Baseline++':
+        elif self.args.name_method == 'Baseline++':
             param = self.args.temp
-        elif self.args.method == 'PT-MAP':
+        elif self.args.name_method == 'PT-MAP':
             param = self.args.alpha
-        elif self.args.method == 'TIM-GD':
+        elif self.args.name_method == 'TIM-GD':
             param = self.args.loss_weights[1]
-        elif self.args.method == 'ICI':
+        elif self.args.name_method == 'ICI':
             param = self.args.d
-        elif self.args.method == 'BDCSPN':
+        elif self.args.name_method == 'BDCSPN':
             param = self.args.temp
             
         self.logger.info('----- Final test results -----')
         if self.args.ablation == True:
             path = 'results/ablation'.format(self.args.dataset, self.args.arch)
-            name_file = path + '/{}.txt'.format(self.args.method)
-            #name_file_criterions = path + '/criterions_{}.plk'.format(self.args.method)
+            name_file = path + '/{}.txt'.format(self.args.name_method)
+            #name_file_criterions = path + '/criterions_{}.plk'.format(self.args.name_method)
             if 'criterions' in logs:
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -204,7 +204,7 @@ class Evaluator:
         ### If in parameter tuning mode ###
         if self.args.tune_parameters == True:
             path = 'results/params/{}/{}'.format(self.args.dataset, self.args.arch)
-            name_file = path + '/{}.txt'.format(self.args.method)
+            name_file = path + '/{}.txt'.format(self.args.name_method)
 
             if not os.path.exists(path):
                 os.makedirs(path)
@@ -224,7 +224,7 @@ class Evaluator:
         ### If in testing mode ###
         else:
             path = 'results/test/{}/{}'.format(self.args.dataset, self.args.arch)
-            name_file = path + '/{}.txt'.format(self.args.method)
+            name_file = path + '/{}.txt'.format(self.args.name_method)
             if not os.path.exists(path):
                 os.makedirs(path)
             if os.path.isfile(name_file) == True:
@@ -247,27 +247,27 @@ class Evaluator:
     def get_method_builder(self, model):
         # Initialize method classifier builder
         method_info = {'model': model, 'device': self.device, 'log_file': self.log_file, 'args': self.args}
-        if self.args.method == 'ALPHA-TIM':
+        if self.args.name_method == 'ALPHA-TIM':
             method_builder = ALPHA_TIM(**method_info)
-        elif self.args.method == 'PADDLE':
+        elif self.args.name_method == 'PADDLE':
             method_builder = PADDLE(**method_info)
-        elif self.args.method == 'SOFT-KM':
+        elif self.args.name_method == 'SOFT-KM':
             method_builder = SOFT_KM(**method_info)
-        elif self.args.method == 'TIM-GD':
+        elif self.args.name_method == 'TIM-GD':
             method_builder = TIM_GD(**method_info)
-        elif self.args.method == 'LaplacianShot':
+        elif self.args.name_method == 'LaplacianShot':
             method_builder = LaplacianShot(**method_info)
-        elif self.args.method == 'BDCSPN':
+        elif self.args.name_method == 'BDCSPN':
             method_builder = BDCSPN(**method_info)
-        elif self.args.method == 'Baseline':
+        elif self.args.name_method == 'Baseline':
             method_builder = Baseline(**method_info)
-        elif self.args.method == 'Baseline++':
+        elif self.args.name_method == 'Baseline++':
             method_builder = Baseline_PlusPlus(**method_info)
-        elif self.args.method == 'PT-MAP':
+        elif self.args.name_method == 'PT-MAP':
             method_builder = PT_MAP(**method_info)
-        elif self.args.method == 'ICI':
+        elif self.args.name_method == 'ICI':
             method_builder = ICI(**method_info)
-        elif self.args.method == 'PADDLE-GD':
+        elif self.args.name_method == 'PADDLE-GD':
             method_builder = PADDLE_GD(**method_info)
         else:
             self.logger.exception("Method must be in ['PADDLE', 'PADDLE_GD', 'SOFT_KM', 'TIM_GD', 'ICI', 'ALPHA_TIM', 'LaplacianShot', 'BDCSPN', 'SimpleShot', 'Baseline', 'Baseline++', 'PT-MAP', 'Entropy_min']")

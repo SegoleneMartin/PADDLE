@@ -1,5 +1,5 @@
 METHOD:
-  method: 'ICI'
+  name_method: 'ICI'
   step: 5
   max_iter : 100
   reduce : "pca"  # in ["isomap", "ltsa", "mds", "lle", "se", "pca", "none"]

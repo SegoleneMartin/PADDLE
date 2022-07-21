@@ -1,5 +1,5 @@
 METHOD:
-  method: 'PADDLE'
+  name_method: 'PADDLE'
   iter: 100
   alpha: 75
   tau: 100
