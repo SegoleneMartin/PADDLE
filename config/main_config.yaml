@@ -8,7 +8,7 @@ EVAL:
     k_eff: 5  # number of different classes represented in the query
     n_ways : 5 # 'full' for all test classes (i.e. K), or integer
     n_query: 75 # Balanced case: 15 query data per class
-    sampling: 'uniform' # ('balanced' | 'dirichlet' | 'uniform') sampling of the query
+    sampling: 'dirichlet' # ('balanced' | 'dirichlet' | 'uniform') sampling of the query
     alpha_dirichlet: 1  # if sampling==dirichlet, dirichlet parameter
     model_tag: 'best'
     plt_metrics: ['accs']
