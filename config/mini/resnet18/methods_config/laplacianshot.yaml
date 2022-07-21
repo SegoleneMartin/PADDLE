@@ -5,3 +5,4 @@ METHOD:
   proto_rect: False
   norm_type: 'CL2N' # ('CL2N', 'L2N', 'UN')
   iter: 20
+  temp: 100

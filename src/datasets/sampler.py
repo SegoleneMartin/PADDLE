@@ -12,8 +12,9 @@ class CategoriesSampler():
                 n_cls : Number of classification ways (k_eff)
                 s_shot : Support shot
                 n_query : Size of query set
-                sampling : 'sampling': Balanced query class distribution: Standard class sampling Few-Shot setting
-                           'dirichlet': Dirichlet's distribution over query data: Realisatic class imbalanced Few-Shot setting
+                sampling : 'balanced': Balanced query class distribution: Standard class sampling Few-Shot setting
+                           'dirichlet': Dirichlet's distribution over query data: For class imbalanced Few-Shot setting
+                           'uniform' : Uniform distribution over query data: Realistic distribution of the data given the dataset
                 alpha : Dirichlet's concentration parameter
 
             returns :
@@ -81,21 +82,15 @@ class SamplerSupport:
             if self.used_set_support == 'repr':
                 for c in classes:
                     l = self.m_ind_support[c]  # all data indexs of this class
-                    #pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
                     pos = torch.randperm(len(l))[:]  # sample n_per data index of this class
                     support.append(l[pos])
-                #support = torch.stack(support).t().reshape(-1)
-                #support = torch.stack(support).reshape(-1)
                 support = torch.cat(support)
             else:
                 for c in classes:
                     l = self.m_ind_support[c]  # all data indexs of this class
-                    #pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
                     pos = torch.randperm(len(l))[:self.s_shot]  # sample n_per data index of this class
                     support.append(l[pos])
                 support = torch.stack(support).t().reshape(-1)
-                #support = torch.stack(support).reshape(-1)
-                # support = torch.cat(support)
             
             yield support
 
@@ -117,8 +112,6 @@ class SamplerQuery:
         for i_batch in range(self.n_batch):
 
             classes = self.list_classes[i_batch][:self.n_cls]
-
-            # A MODIFIER si autre data que Inat car on pourrait avoir des superpositions de donnees
             query = []
             
             alpha = self.alpha * np.ones(self.n_cls)
@@ -141,18 +134,13 @@ class SamplerQuery:
                         l = self.m_ind_query[c]  # all data indexs of this class
                         pos = torch.randperm(len(l))[:nb_shot]  # sample n_per data index of this class
                         sum_pos += min(len(pos),nb_shot)
-                        #assert len(pos) == nb_shot
                         query.append(l[pos])
-            
                 query = torch.cat(query)
 
-                
             elif self.sampling == "uniform":
                 complete_possible_samples = self.m_ind_query[classes[0]]
-                #print("Len class ", len(self.m_ind_query[classes[0]]))
                 for c in classes[1:]:
                     complete_possible_samples = torch.cat((complete_possible_samples, self.m_ind_query[c]))
-                    #print("Len class ", len(self.m_ind_query[c]))
                 pos = torch.randperm(len(complete_possible_samples))[:self.n_query]
                 query = complete_possible_samples[pos]
             
@@ -197,32 +185,3 @@ def get_dirichlet_query_dist(alpha, n_tasks, k_eff, n_querys):
     alpha = np.full(k_eff, alpha)
     prob_dist = np.random.dirichlet(alpha, n_tasks)
     return convert_prob_to_samples(prob=prob_dist, n_query=n_querys)
-
-
-
-class SamplerBasic():
-    
-    """
-            CategorySampler
-            inputs:
-
-            returns :
-                sampler : CategoriesSampler object that will yield batch when iterated
-                When iterated returns : batch
-                        data : torch.tensor [n_support + n_query, channel, H, W]
-                               [support_data, query_data]
-                        labels : torch.tensor [n_support + n_query]
-                               [support_labels, query_labels]
-
-                        Where :
-                            Support data and labels class sequence is :
-                                [a b c d e a b c d e a b c d e ...]
-                             Query data and labels class sequence is :
-                               [a a a a a a a a b b b b b b b c c c c c d d d d d e e e e e ...]
-    """
-    def __init__(self, index):
-        self.index = index
-
-    def __iter__(self):
-            
-        yield torch.tensor([self.index])

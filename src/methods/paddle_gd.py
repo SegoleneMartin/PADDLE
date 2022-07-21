@@ -41,17 +41,17 @@ class PADDLE_GD(KM):
         self.logger.info(" ==> Executing PADDLE with LAMBDA = {}".format(self.alpha))
         
         t0 = time.time()
-        y_s_one_hot = F.one_hot(y_s, self.n_ways)
+        y_s_one_hot = F.one_hot(y_s, self.n_ways).to(self.device)
         n_task, n_ways = y_s_one_hot.size(0), y_s_one_hot.size(2)
         n_query = query.size(1)
 
         # Initialize p
-        self.p = (- self.get_logits(query)).softmax(-1)
+        self.p = (- self.get_logits(query)).softmax(-1).to(self.device)
         self.p.requires_grad_()
         self.weights.requires_grad_()
         optimizer = torch.optim.Adam([self.weights, self.p], lr=self.lr)
 
-        all_samples = torch.cat([support, query], 1)
+        all_samples = torch.cat([support.to(self.device), query.to(self.device)], 1)
         for i in tqdm(range(self.iter)):
             # old_loss = loss.item()
             # p_old = deepcopy(self.p.detach())
@@ -64,10 +64,10 @@ class PADDLE_GD(KM):
             data_fitting = 1/2 * (l2_distances * all_p).sum((-2, -1)).sum(0)
 
             # Complexity term
-            marg_p = self.p.mean(1)  # [n_tasks, K]
+            marg_p = self.p.mean(1).to(self.device)  # [n_tasks, K]
             marg_ent = - (marg_p * torch.log(marg_p + 1e-12)).sum(-1).sum(0)  # [n_tasks]
 
-            loss = data_fitting - self.alpha * marg_ent
+            loss = (data_fitting - self.alpha * marg_ent).to(self.device)
 
             # Gradient step
             optimizer.zero_grad()
@@ -79,9 +79,9 @@ class PADDLE_GD(KM):
                 self.p = self.simplex_project(self.p)
                 weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
                 criterions = weight_diff
-                t1 = time.time()
-                self.record_convergence(new_time=t1-t0, criterions=criterions)
-            self.record_info(y_q=y_q)
+            t1 = time.time()
+            self.record_convergence(new_time=t1-t0, criterions=criterions)
+        self.record_info(y_q=y_q)
 
 
     def simplex_project(self, p: torch.Tensor, l=1.0):

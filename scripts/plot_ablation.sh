@@ -3,5 +3,5 @@ python -m src.plots --use_latex True \
 					--out_dir plots \
 					--action plot_ablation \
 					--archs resnet18 \
-					--datasets mini \
-					--shots 20
+					--datasets tiered \
+					--shots 5

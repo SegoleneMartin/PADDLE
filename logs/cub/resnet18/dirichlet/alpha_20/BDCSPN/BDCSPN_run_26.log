@@ -1,9 +1,0 @@
-[__main__]: [INFO]: => Creating model 'resnet18'
-[__main__]: [INFO]: Number of model parameters: 11220132
-[src.eval]: [INFO]: => Runnning full evaluation with method: BDCSPN
-[src.eval]: [INFO]:  ==> Features loaded from checkpoints/cub/softmax/resnet18/best/test/output_mean.plk
-[src.methods.bdcspn]: [INFO]:  ==> Executing proto-rectification ...
-[src.methods.bdcspn]: [INFO]:  ==> Executing predictions on 1 shot tasks ...
-[src.eval]: [INFO]: ----- Final test results -----
-[src.eval]: [INFO]: 1-shot mean test accuracy over 10 tasks: 0.8226667642593384
-[src.eval]: [INFO]: 1-shot mean hungarian accuracy over 10 tasks: 0.8400000000000001

@@ -1,9 +1,0 @@
-[__main__]: [INFO]: => Creating model 'resnet18'
-[__main__]: [INFO]: Number of model parameters: 11201664
-[src.eval]: [INFO]: => Runnning full evaluation with method: PT-MAP
-[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
-[src.methods.pt_map]: [INFO]:  ==> Executing initial data transformation ...
-[src.methods.pt_map]: [INFO]:  ==> Executing PT-MAP adaptation on 5 shot tasks ...
-[src.eval]: [INFO]: ----- Final test results -----
-[src.eval]: [INFO]: 5-shot mean test accuracy over 50 tasks: 0.6181333065032959
-[src.eval]: [INFO]: 5-shot mean F1 score over 50 tasks: 0.6502715868956276

@@ -1,8 +1,0 @@
-[__main__]: [INFO]: => Creating model 'resnet18'
-[__main__]: [INFO]: Number of model parameters: 11201664
-[src.eval]: [INFO]: => Runnning full evaluation with method: LaplacianShot
-[src.eval]: [INFO]:  ==> Features loaded from checkpoints/mini/softmax/resnet18/best/val/output_mean.plk
-[src.methods.laplacianshot]: [INFO]:  ==> Executing 5-shot predictions with lmd = 0.7 ...
-[src.eval]: [INFO]: ----- Final test results -----
-[src.eval]: [INFO]: 5-shot mean test accuracy over 1000 tasks: 0.8257067203521729
-[src.eval]: [INFO]: 5-shot mean F1 score over 1000 tasks: 0.9401422168497476

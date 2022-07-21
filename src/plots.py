@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", type=str)
     parser.add_argument("--action", type=str, default="benchmark_plot")
     parser.add_argument("--out_dir", type=str)
-    parser.add_argument("--criterion_threshold", type=float, default=1e-6)
+    parser.add_argument("--criterion_threshold", type=float, default=1e-6*1)
     parser.add_argument("--archs", nargs='+', type=str)
     parser.add_argument("--datasets", nargs='+', type=str)
     parser.add_argument("--shots", nargs='+', type=str)
@@ -48,7 +48,7 @@ colors = ["#f02d22",
 "#c361aa",
 "#57ab67",
 "#6691ce",
-"#cd6c39"]
+"#57ab67"]
 pretty = defaultdict(str)
 pretty['mini'] = r"\textit{mini}-ImageNet"
 pretty['tiered'] = r"\textit{tiered}-ImageNet"
@@ -60,8 +60,9 @@ blue = '#2CBDFE'
 pink = '#F3A0F2'
 
 
-def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'valid') / w
+def moving_average(x):
+    return x - x[0] + 1e-3
+    # return np.convolve(x, np.ones(w), 'valid') / w
 
 
 def convergence_plot(args):
@@ -79,8 +80,6 @@ def convergence_plot(args):
                     if os.path.isfile(name_file) == True:
                         x, y = np.loadtxt(name_file)
                         x = np.cumsum(x)
-                        print("x", x.shape)
-                        print("y", y.shape)
                         criterion_defined = True
                     else:
                         logger.warning(f"Criterion not defined for {method}")
@@ -94,27 +93,38 @@ def convergence_plot(args):
                     msg = [str(method)]
                     if criterion_defined:
                         index_convergence = np.where(y < args.criterion_threshold)[0]
-                        print(index_convergence)
                         if len(index_convergence):
+                            convergence = True
                             index_convergence = index_convergence[0]
                             time_to_convergence = x[index_convergence]
                             msg.append(f"Time to convergence = {time_to_convergence}")
+                        else:
+                            convergence = False
                     
                     logger.info('\t'.join(msg))
 
                     if criterion_defined:
-                        n = 100
-                        #ysmooth = moving_average(y, n)
-                        # print(x)
-                        #print(x[:-index_convergence+1])
-                        #print(y[:-index_convergence+1])
-                        ax.plot(x[:-50], y[:-50],
+                        if convergence == True:
+                            n = index_convergence 
+                        else:
+                            if method=='ALPHA-TIM':
+                                n = 6000
+                            else:
+                                n = 300
+                        x = moving_average(x)
+                        # ax.plot(y[:n],
+                        #         label=list_name[method_index],
+                        #         color=colors[method_index],
+                        #         marker=markers[method_index],
+                        #         markersize=10,
+                        #         linewidth=3,
+                        #         markevery=100)
+                
+                        ax.plot(x[:n], y[:n],
                                 label=list_name[method_index],
                                 color=colors[method_index],
-                                marker=markers[method_index],
-                                markersize=10,
-                                linewidth=3,
-                                markevery=100)
+                                linewidth=3)
+
 
                     # ax.fill_between(x, criterion['mean'] - criterion['std'], 
                     #                 criterion['mean'] + criterion['std'],
@@ -123,6 +133,7 @@ def convergence_plot(args):
                     ax.set_yscale('log')
                     ax.set_xscale('log')
                     ax.set_xlabel("Elapsed time (s)")
+                    # ax.set_xlabel("Iterations")
                     # ax.set_ylim(7e-8, 1e-1)
 
 
@@ -208,6 +219,9 @@ def benchmark_plot(args):
                 #             rotation=90, ha='center', va='center',
                 #             transform=ax.transAxes)
             ax.set_xticks(list_classes[keep_index])
+
+
+
 
     plt.tight_layout()
     handles, labels = ax.get_legend_handles_labels()

@@ -228,10 +228,10 @@ class PADDLE(KM):
         self.v = torch.zeros(n_task, n_ways).to(self.device)
 
         for i in tqdm(range(self.iter)):
+            weights_old = deepcopy(self.weights.detach())
             t0 = time.time()
             self.p_update(query)
             self.v_update()
-            weights_old = deepcopy(self.weights.detach())
             self.weights_update(support, query, y_s_one_hot)
             weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
             criterions = weight_diff

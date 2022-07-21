@@ -9,9 +9,8 @@ from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
 from src.methods.baseline import Baseline, Baseline_PlusPlus
 from src.methods.pt_map import PT_MAP
-from src.datasets import Tasks_Generator, get_dataset, get_dataloader, SamplerSupport, SamplerBasic, SamplerQuery, CategoriesSampler
+from src.datasets import Tasks_Generator, get_dataset, get_dataloader, SamplerSupport, SamplerQuery, CategoriesSampler
 import torch
-#from src import datasets
 import os
 from src.utils import load_pickle, save_pickle
 import random
@@ -39,7 +38,6 @@ class Evaluator:
         """
 
         # Load features from memory if previously saved ...
-        print("used_set_name", used_set_name)
         save_dir = os.path.join(model_path, model_tag, used_set_name)
         filepath = os.path.join(save_dir, 'output.plk')
         if os.path.isfile(filepath) and (not fresh_start):
@@ -97,9 +95,6 @@ class Evaluator:
         dataset.update({'support': support_set})
         query_set = get_dataset(self.args.used_set_query, args=self.args, **loader_info)
         dataset.update({'query': query_set})
-
-        print("support len", len(support_set))
-        print("query len", len(query_set))
         
         ## Compute train mean
         name_file = 'train_mean_' + self.args.dataset + '_' + self.args.arch + '.pt'
@@ -182,7 +177,7 @@ class Evaluator:
         elif self.args.method == 'SOFT-KM':
             param = self.args.alpha
         elif self.args.method == 'LaplacianShot':
-            param = self.args.lmd[0]
+            param = self.args.lmd
         elif self.args.method == 'Baseline':
             param = self.args.iter
         elif self.args.method == 'Baseline++':
@@ -201,13 +196,10 @@ class Evaluator:
             path = 'results/ablation'.format(self.args.dataset, self.args.arch)
             name_file = path + '/{}.txt'.format(self.args.method)
             #name_file_criterions = path + '/criterions_{}.plk'.format(self.args.method)
-            print('1', logs.keys())
             if 'criterions' in logs:
-                print("2", logs.keys())
                 if not os.path.exists(path):
                     os.makedirs(path)
-                #print(logs['criterions'])
-                np.savetxt(name_file, (np.array(logs['timestamps']), np.array(logs['criterions'][:, 0])))            
+                np.savetxt(name_file, (np.array(logs['timestamps']), np.array(np.mean(logs['criterions'], axis=1))))            
 
         ### If in parameter tuning mode ###
         if self.args.tune_parameters == True:

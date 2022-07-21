@@ -1,8 +1,0 @@
-[__main__]: [INFO]: => Creating model 'resnet18'
-[__main__]: [INFO]: Number of model parameters: 11348895
-[src.eval]: [INFO]: => Runnning full evaluation with method: BDCSPN
-[src.methods.bdcspn]: [INFO]:  ==> Executing proto-rectification ...
-[src.methods.bdcspn]: [INFO]:  ==> Executing predictions on 5 shot tasks ...
-[src.eval]: [INFO]: ----- Final test results -----
-[src.eval]: [INFO]: 5-shot mean test accuracy over 1000 tasks: 0.806320071220398
-[src.eval]: [INFO]: 5-shot mean F1 score over 1000 tasks: 0.6371511387163561

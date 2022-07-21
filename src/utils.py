@@ -357,17 +357,14 @@ class Logger:
     def exception(self, msg):
         self.logger.exception(msg)
 
-def make_log_dir(log_path, dataset, backbone, method, sampling, alpha_dirichlet):
-    log_dir = os.path.join(log_path, dataset, backbone, sampling, 'alpha_'+str(alpha_dirichlet), method)
+def make_log_dir(log_path, dataset, backbone, method, sampling):
+    log_dir = os.path.join(log_path, dataset, backbone, sampling, method)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
     return log_dir
 
-def get_log_file(log_path, dataset, backbone, method, sampling, alpha_dirichlet):
-    if sampling == 'balanced':
-        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, method=method)
-    else :
-        log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, alpha_dirichlet=alpha_dirichlet, method=method)
+def get_log_file(log_path, dataset, backbone, method, sampling):
+    log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, method=method)
     i = 0
     filename = os.path.join(log_dir, '{}_run_{}.log'.format(method, i))
     while os.path.exists(os.path.join(log_dir, '{}_run_%s.log'.format(method)) % i):

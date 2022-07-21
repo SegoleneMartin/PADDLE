@@ -1,4 +1,0 @@
-[__main__]: [INFO]: => Creating model 'resnet18'
-[__main__]: [INFO]: Number of model parameters: 11348895
-[src.eval]: [INFO]: => Runnning full evaluation with method: ALPHA-TIM
-[src.eval]: [INFO]:  ==> Beginning feature extraction to compute training mean

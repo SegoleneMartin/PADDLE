@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
-    #device = torch.device("cpu")
+    device = torch.device("cpu")
     #callback = None if args.visdom_port is None else VisdomLogger(port=args.visdom_port)
     callback = None
     if args.seed is not None:
@@ -47,11 +47,11 @@ def main():
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
         cudnn.deterministic = True
-    torch.cuda.set_device(0)
+    #torch.cuda.set_device(0)
 
     # init logger
     log_file = get_log_file(log_path=args.log_path, dataset=args.dataset,
-                            backbone=args.arch, method=args.method, sampling=args.sampling, alpha_dirichlet=args.alpha_dirichlet)
+                            backbone=args.arch, method=args.method, sampling=args.sampling)
     logger = Logger(__name__, log_file)
 
     # create model

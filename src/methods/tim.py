@@ -234,6 +234,8 @@ class TIM_GD(TIM):
         y_s_one_hot = get_one_hot(y_s)
         self.model.train()
         for i in tqdm(range(self.iter)):
+            weights_old = deepcopy(self.weights.detach())
+            t0 = time.time()
             logits_s = self.get_logits(support)
             logits_q = self.get_logits(query)
 
@@ -248,12 +250,15 @@ class TIM_GD(TIM):
             loss.backward()
             optimizer.step()
             
-            t1 = time.time()
             self.model.eval()
 
             
             self.model.train()
-            t0 = time.time()
+            t1 = time.time()
+            
+            weight_diff = (weights_old - self.weights).norm(dim=-1).mean(-1)
+            criterions = weight_diff
+            self.record_convergence(new_time=t1-t0, criterions=criterions)
         self.record_info(new_time=t1-t0,
                              support=support,
                              query=query,
@@ -286,7 +291,6 @@ class ALPHA_TIM(TIM):
         updates :
             self.weights : torch.Tensor of shape [n_task, num_class, feature_dim]
         """
-        t0 = time.time()
 
         if self.use_tuned_alpha_values or self.alpha_values is None:
             self.get_alpha_values(shot)
