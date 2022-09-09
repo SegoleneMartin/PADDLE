@@ -16,7 +16,7 @@ from src.models.ingredient import get_model
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
+# nouveau test
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Main')
