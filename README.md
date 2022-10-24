@@ -2,59 +2,73 @@
 
 
 ##  Introduction
-This repo contains the code for our NeurIPS 2022 submitted paper "Towards Practical Few-shot Query Sets:
-Transductive Minimum Description Length Inference". This is a framework that regroups all methods evaluated in our paper. Results provided in the paper can be reproduced with this repo. Code was developed under python 3.8.3 and pytorch 1.4.0.
+This repo contains the code for our NeurIPS 2022 paper "Towards Practical Few-shot Query Sets:
+Transductive Minimum Description Length Inference", available at INSERT LINK. 
 
+It includes our two main contributions:
+
+- the generation of realistic few-shot tasks with a very large number $K$ of ways, and an adjustable number $K_{\mathrm{eff}}$ of classes effectively present in the query set, 
+
+- our classifier PADDLE (see Figure below) as well as all the other methods evaluated in our paper.
+
+Results provided in the paper can be reproduced with this repo. Code was developed under python 3.8 and pytorch 1.12.1.
+
+<img src="plots/framework.png" scale=1/>
 
 ## 1. Getting started
 
-
-### 1.1 Quick installation (recommended) (Download datasets and models)
-To download datasets tiered and mini and the corresponding pre-trained models (checkpoints), follow instructions 1.1.1 to 1.1.2 of NeurIPS 2020 paper "TIM: Transductive Information Maximization" public implementation (https://github.com/mboudiaf/TIM).
-To download the i-Nat dataset for few-shot classification, follow the instructions 2.4 of the ICML 2020 paper "LaplacianShot: Laplacian Regularized Few Shot Learning" public implementation (https://github.com/imtiazziko/LaplacianShot).
-#### 1.1.1 Place datasets
-Make sure to place the downloaded datasets (data/ folder) at the root of the directory.
-
-#### 1.1.2 Place models
-Make sure to place the downloaded pre-trained models (checkpoints/ folder) at the root of the directory.
-
-### 1.2 Manual installation
-Follow instruction 1.2 of NeurIPS 2020 paper "TIM: Transductive Information Maximization" public implementation (https://github.com/mboudiaf/TIM) if facing issues with previous steps. Make sure to place data/ and checkpoints/ folders at the root of the directory.
-
-### 2. Requirements
-To install requirements:
+### 1.1. Requirements
+Create a new conda environment using the .yml file provided.
 ```bash
-conda create --name <env> --file requirements.txt
+conda env create -f paddle_env.yml
 ```
-Where \<env> is the name of your environment
 
-## 3. Reproducing the main results
+### 1.2 Download datasets and models
+Our framework was developped for the datasets mini-imagenet, tiered-imagenet and iNatural. We used pre-trained models. 
+
+The downloaded datasets should be placed in the folder data/ the following way:
+    .
+    ├── ...
+    ├── data                    
+    │   ├── mini_imagenet          
+    │   ├── tiered_imagenet        
+    │   └── inatural               
+    └── ...
+
+The downloaded models should be placed in the folder checkpoints/ the following way:
+    .
+    ├── ...
+    ├── checkpoints                    
+    │   ├── mini          
+    │   ├── tiered        
+    │   └── inatural               
+    └── ...
+
+#### 1.2.1 Mini-imagenet and tiered-imagenet
+
+We follow instructions 1.1.1 to 1.1.2 of NeurIPS 2020 paper "TIM: Transductive Information Maximization" public implementation (https://github.com/mboudiaf/TIM).
+
+For the datasets, please download the zip file at https://drive.google.com/drive/folders/163HGKZTvfcxsY96uIF6ILK_6ZmlULf_j?usp=sharing, and unzip it into the data/ folder.
+
+For the corresponding pre-trained models, please download the zip file at https://drive.google.com/file/d/15MFsig6pjXO7vZdo-1znJoXtHv4NY-AF/view?usp=sharing, and unzip it at the root.
+
+#### 1.2.2 Inatural
+
+To download the iNatural dataset for few-shot classification, we follow the instructions 2.4 of the ICML 2020 paper "LaplacianShot: Laplacian Regularized Few Shot Learning" public implementation (https://github.com/imtiazziko/LaplacianShot).
+
+
+## 3. Running the code and reproducing the main results
 
 Before anything, activate the environment:
 ```python
-source activate <env>
+conda activate paddle
 ```
 
 ### 3.1 Table 1 and 2 results in paper
 
-To reproduce the results from the paper, from the root of the directory execute this python command.
+If you want to reproduce the results in the realistic few-shot setting proposed in the paper, on mini-Imagenet, for $20$-shots tasks with $K_{\mathrm{eff}} = 5$, using a ResNet-18 and PADDLE classifier, go to the root of the directory and execute:
 ```python
-python3 -m main --base_config <path_to_base_config_file> --method_config <path_to_method_config_file> 
-```
-
-The <path_to_base_config_file> follows this hierarchy:
-```python
-config/<balanced or dirichlet>/base_config/<resnet18 or wideres>/<mini or tiered or inatural/base_config.yaml
-```
-
-The <path_to_method_config_file> follows this hierarchy:
-```python
-config/<balanced or dirichlet>/methods_config/<soft_km or paddle or km_gd_unbiased or alpha_tim or tim or baseline or bdcspn or laplacianshot or pt_map or ici>.yaml
-```
-
-For instance, if you want to reproduce the results in the general few-shot setting proposed in the paper, with Keff=5, on mini-Imagenet, using ResNet-18, with PADDLE method go to the root of the directory and execute:
-```python
-python3 -m src.main --base_config config/dirichlet/base_config/resnet18/mini/base_config.yaml --method_config config/dirichlet/methods_config/paddle.yaml
+python3 -m src.main --opts dataset mini shots [20] k_eff 5 arch resnet18 method paddle 
 ```
 
 # Acknowledgements
