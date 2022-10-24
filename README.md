@@ -13,7 +13,7 @@ It includes our two main contributions:
 
 Results provided in the paper can be reproduced with this repo. Code was developed under python 3.8 and pytorch 1.12.1.
 
-<img src="./plots/framework.png" scale=1/>
+<img src="framework.png" scale=1/>
 
 ## 1. Getting started
 
