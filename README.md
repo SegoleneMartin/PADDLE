@@ -27,6 +27,7 @@ conda env create -f paddle_env.yml
 Our framework was developped for the datasets mini-imagenet, tiered-imagenet and iNatural. We used pre-trained models. 
 
 The downloaded datasets should be placed in the folder data/ the following way:
+
     .
     ├── ...
     ├── data                    
@@ -36,6 +37,7 @@ The downloaded datasets should be placed in the folder data/ the following way:
     └── ...
 
 The downloaded models should be placed in the folder checkpoints/ the following way:
+
     .
     ├── ...
     ├── checkpoints                    
@@ -70,6 +72,8 @@ If you want to reproduce the results in the realistic few-shot setting proposed 
 ```python
 python3 -m src.main --opts dataset mini shots [20] k_eff 5 arch resnet18 method paddle 
 ```
+You might also want to directly modify the options in the following config file: config/main_config.yalm
+
 
 # Acknowledgements
 Special thanks to the authors of NeurIPS 2020 paper "TIM: Transductive Information Maximization" (TIM) (https://github.com/mboudiaf/TIM) and to the authors of NeurIPS 2021 paper "Realistic evaluation of transductive few-shot learning" (https://github.com/oveilleux/Realistic_Transductive_Few_Shot) for publicly sharing their pre-trained models and their source code from which this repo was inspired from. 
