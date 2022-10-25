@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out_dir", type=str)
     parser.add_argument("--criterion_threshold", type=float, default=1e-6*1)
     parser.add_argument("--archs", nargs='+', type=str)
-    parser.add_argument("--datasets", nargs='+', type=str)
+    parser.add_argument("--dataset", nargs='+', type=str)
     parser.add_argument("--shots", nargs='+', type=str)
     parser.add_argument("--ncols", type=int, default=10)
     args = parser.parse_args()
@@ -66,7 +66,7 @@ def moving_average(x):
 
 
 def convergence_plot(args):
-    for i, dataset in enumerate(args.datasets):
+    for i, dataset in enumerate(args.dataset):
         for j, arch in enumerate(args.archs):
             for k, shot in enumerate(args.shots):
                 folder = ospjoin(args.root)
@@ -164,25 +164,25 @@ def convergence_plot(args):
 
 
 def benchmark_plot(args):
-    n_datasets = len(args.datasets)
+    n_dataset = len(args.dataset)
     n_archs = len(args.archs)
-    assert n_datasets and n_archs
+    assert n_dataset and n_archs
     if len(args.shots) == 'None': # for inatural
         args.shots = [1]
-    fig, axes = plt.subplots(figsize=(8 * len(args.shots), 6 * n_datasets * n_archs),
+    fig, axes = plt.subplots(figsize=(8 * len(args.shots), 6 * n_dataset * n_archs),
                              ncols=len(args.shots),
-                             nrows=n_datasets * n_archs,
+                             nrows=n_dataset * n_archs,
                              dpi=300,
                              sharex=True,
                              )
-    for i, dataset in enumerate(args.datasets):
+    for i, dataset in enumerate(args.dataset):
         for j, arch in enumerate(args.archs):
             folder = Path(args.root) / dataset / arch
             min_ = 100.0
             max_ = 0.
             for k, shot in enumerate(args.shots):
                 if isinstance(axes, np.ndarray):
-                    if n_datasets * n_archs > 1:
+                    if n_dataset * n_archs > 1:
                         ax = axes[i * n_archs + j, k]
                     else:
                         ax = axes[k]
@@ -211,7 +211,7 @@ def benchmark_plot(args):
                             min_ = min(list_acc)
                 # if i == 0 and j == 0:
                 #     ax.set_title(rf"{shot} shots")
-                if i * n_archs + j == (n_datasets * n_archs - 1):
+                if i * n_archs + j == (n_dataset * n_archs - 1):
                     ax.set_xlabel(rf'Number of effective classes $K_{{eff}}$')
                 # if k == 0:
                 #     ax.set_ylabel('Accuracy')
@@ -232,7 +232,7 @@ def benchmark_plot(args):
                ncol=args.ncols,
                frameon=False)
     os.makedirs(args.out_dir, exist_ok=True)
-    outfilename = ospjoin(args.out_dir, f"{'-'.join(args.datasets)}_{'-'.join(args.archs)}_{'-'.join(args.shots)}.pdf")
+    outfilename = ospjoin(args.out_dir, f"{'-'.join(args.dataset)}_{'-'.join(args.archs)}_{'-'.join(args.shots)}.pdf")
     plt.savefig(outfilename, bbox_inches="tight")
     logger.info(f"Saved plot at {outfilename}")
 

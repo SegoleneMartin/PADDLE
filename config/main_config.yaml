@@ -1,21 +1,20 @@
 EVAL:
-    dataset: 'mini'
+    evaluate: True                  # if True, evaluate methods
+    dataset: 'mini'                 # ('mini', 'tiered', 'inatural')
     arch: 'resnet18'                # ('resnet18', 'wideres')
-    evaluate: True                  # Set to True to evaluate methods
-    method: 'ici'                   # ('paddle', 'paddle_gd', 'tim', 'alpha_tim', 'bdcspn', 'laplacianshot', 'ici', 'pt_map', 'baseline', 'baseline_pp', 'soft_km')
-    number_tasks: 1000              # Number of tasks to evaluate
-    batch_size: 1000                # Number of tasks per batch
-    k_eff: 5                        # Number of different classes represented in the query
-    n_ways : 5                      # 'full' for all test classes (i.e. K), or integer
-    n_query: 75                     # Total number of images in query
-    sampling: 'dirichlet'           # ('balanced' | 'dirichlet' | 'uniform') sampling of the query
-    alpha_dirichlet: 1              # if sampling==dirichlet, dirichlet parameter
-    model_tag: 'best'
-    plt_metrics: ['accs']
-    shots: [5,10,20]
-    used_set_support: 'val'         # ('test', 'val') for mini and tiered, 'repr' for inatural
-    used_set_query: 'val'           # ('test', 'val') for mini and tiered, 'query' for inatural
-    fresh_start: False
-    convergence_ablation: False
-    tune_parameters: True
-    ablation: False
+    model_tag: 'best'               # ('final', 'best')
+    method: 'paddle'                # ('paddle', 'paddle_gd', 'tim', 'alpha_tim', 'bdcspn', 'laplacianshot', 'ici', 'pt_map', 'baseline', 'baseline_pp', 'soft_km')
+    k_eff: 5                        # number of different classes represented in the query
+    n_ways : 'full'                 # 'full' for all test classes (i.e. K), or integer. Eg. n_ways = k_eff corresponds to the standard setting
+    n_query: 75                     # total number of images in query
+    shots: [5,10,20]                # number of shots for which evaluation is performed
+    sampling: 'uniform'             # ('balanced' | 'dirichlet' | 'uniform') sampling of the query
+    alpha_dirichlet: 1              # if sampling == 'dirichlet', dirichlet parameter
+    number_tasks: 1000              # number of tasks to evaluate
+    batch_size: 1000                # number of tasks per batch
+    used_set_support: 'test'        # ('test', 'val') for mini and tiered, 'repr' for inatural
+    used_set_query: 'test'          # ('test', 'val') for mini and tiered, 'query' for inatural
+    fresh_start: False              # if False, loads the previously extracted features  
+    tune_parameters: False          # if True, saves method parameter and corresponding accuracies in .txt file located at Results/params
+    save_results: False             # if True, saves K_eff and corresponding accuracies in .txt file located at Results/test
+    ablation: False                 # if True, convergence ablation

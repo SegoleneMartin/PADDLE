@@ -222,7 +222,7 @@ class Evaluator:
             f.close()
 
         ### If in testing mode ###
-        else:
+        elif self.args.save_results == True:
             path = 'results/test/{}/{}'.format(self.args.dataset, self.args.arch)
             name_file = path + '/{}.txt'.format(self.args.name_method)
             if not os.path.exists(path):
