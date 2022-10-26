@@ -12,8 +12,6 @@ import matplotlib
 matplotlib.use('Agg')
 from sklearn.neighbors import NearestNeighbors
 from ..utils import get_metric, Logger, get_one_hot
-from sklearn.metrics import accuracy_score, f1_score
-from scipy.optimize import linear_sum_assignment
 
 class LaplacianShot(object):
     def __init__(self, model, device, log_file, args):
@@ -45,7 +43,7 @@ class LaplacianShot(object):
         self.logger.del_logger()
 
 
-    def record_info(self, acc, f1, ent_energy, new_time):
+    def record_info(self, acc, ent_energy, new_time):
         """
         inputs:
             acc_list : torch.Tensor of shape [iter]
@@ -54,19 +52,17 @@ class LaplacianShot(object):
         """
 
         self.test_acc.append(acc)
-        self.test_F1.append(f1)
         self.ent_energy.append(ent_energy)
         self.timestamps.append(new_time)
 
     def get_logs(self):
         #self.test_acc = np.array([self.test_acc])
         self.test_acc = torch.stack(self.test_acc, dim=0).squeeze(2).cpu().numpy()
-        self.test_F1 = np.array([self.test_F1])
         self.ent_energy = np.array(self.ent_energy)
         self.timestamps = np.array(self.timestamps).sum(0)
         return {'timestamps': self.timestamps,
                 'acc': self.test_acc,
-                'ent_energy': self.ent_energy, 'F1': self.test_F1}
+                'ent_energy': self.ent_energy}
 
     def normalization(self, z_s, z_q, train_mean):
         """
@@ -77,12 +73,14 @@ class LaplacianShot(object):
         """
         z_s = z_s.cpu()
         z_q = z_q.cpu()
+
         # CL2N Normalization
         if self.norm_type == 'CL2N':
             z_s = z_s - train_mean
             z_s = z_s / LA.norm(z_s, 2, 2)[:, :, None]
             z_q = z_q - train_mean
             z_q = z_q / LA.norm(z_q, 2, 2)[:, :, None]
+
         # L2 Normalization
         elif self.norm_type == 'L2N':
             z_s = z_s / LA.norm(z_s, 2, 2)[:, :, None]
@@ -101,20 +99,16 @@ class LaplacianShot(object):
         """
         eta = support.mean(1) - query.mean(1)  # Shifting term
         query = query + eta[:, np.newaxis, :]  # Adding shifting term to each normalized query feature
-
         query_aug = torch.cat((support, query), axis=1)  # Augmented set S' (X')
         one_hot = get_one_hot(y_s)
         counts = one_hot.sum(1).view(support.size()[0], -1, 1)
         weights = one_hot.transpose(1, 2).matmul(support)
         init_prototypes = weights / counts
 
-
         proto_weights = []
         for j in tqdm(range(self.number_tasks)):
             distance = get_metric('cosine')(init_prototypes[j], query_aug[j])
             predict = torch.argmin(distance, dim=1)
-            if self.dataset == 'inatural' and self.used_set_support == 'repr':
-                predict = y_s[j][predict]
             cos_sim = F.cosine_similarity(query_aug[j][:, None, :], init_prototypes[j][None, :, :], dim=2)  # Cosine similarity between X' and Pn
             cos_sim = self.temp * cos_sim
             W = F.softmax(cos_sim, dim=1)
@@ -125,6 +119,7 @@ class LaplacianShot(object):
                 proto = init_prototypes[j]
 
             proto_weights.append(proto)
+
         proto_weights = np.stack(proto_weights, axis=0)
         return proto_weights
 
@@ -181,8 +176,6 @@ class LaplacianShot(object):
 
         return E
 
-    
-    
     def bound_update(self, unary, kernel, bound_lambda, y_s, y_q, task_i, bound_iteration=20, batch=False):
         oldE = float('inf')
         Y = self.normalize(-unary)
@@ -285,9 +278,4 @@ class LaplacianShot(object):
             preds, acc_list, ent_energy, times = self.bound_update(unary=unary, kernel=W, bound_lambda=self.lmd, y_s=y_s, y_q=y_q, task_i=i,
                                                 bound_iteration=self.iter)
 
-            q_shot = len(preds)
-            ground_truth = list(y_q[i].reshape(q_shot))
-            union = list(range(self.n_ways))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-
-            self.record_info(acc=acc_list, f1=f1, ent_energy=ent_energy, new_time=times)
+            self.record_info(acc=acc_list, ent_energy=ent_energy, new_time=times)

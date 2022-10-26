@@ -1,18 +1,14 @@
 from typing import Tuple, List
 import torch
 from tqdm import tqdm
-
 import torch.nn.functional as F
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 import math
 import numpy as np
 from sklearn.linear_model import ElasticNet
-from sklearn.preprocessing import normalize
-from src.utils import get_one_hot, Logger
 from tqdm import tqdm
 import time
-from sklearn.metrics import f1_score
 
 
 class ICI(object):
@@ -34,55 +30,42 @@ class ICI(object):
         self.used_set_support = args.used_set_support
 
     def init_info_lists(self):
-        self.timestamps = []
         self.test_acc = []
-        self.test_F1 = []
 
-    def record_info(self, new_time, probs_q, y_q):
+    def record_info(self, probs_q, y_q):
         """
         inputs:
             y_q : torch.Tensor of shape [n_task, q_shot] :
         """
         preds_q = probs_q.argmax(2)
-        n_tasks, q_shot = preds_q.size()
-        self.timestamps.append(new_time)
         accuracy = (preds_q.cpu() == y_q.cpu()).float().mean(1, keepdim=True)
         self.test_acc.append(accuracy)
-        union = list(range(self.n_ways))
-        for i in range(n_tasks):
-            ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
-            preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.test_F1.append(f1)
 
     def get_logs(self):
         self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
-        return {'timestamps': self.timestamps,
-                'acc': self.test_acc, 'F1': self.test_F1}
+        return {'acc': self.test_acc}
 
     def run_task(self, task_dic, shot):
-        print("ok")
+        """
+        inputs:
+            task_dic : dictionnary with n_tasks few-shot tasks
+            shot : scalar, number of shots
+        """
+
         # Extract support and query
-        y_s, y_q = task_dic['y_s'], task_dic['y_q']
-        x_s, x_q = task_dic['x_s'], task_dic['x_q']
-
-        support = x_s.to(self.device)  # [ N * (K_s + K_q), d]
-        query = x_q.to(self.device)  # [ N * (K_s + K_q), d]
-        y_s = y_s.long().squeeze(2).to(self.device)
-        y_q = y_q.long().squeeze(2).to(self.device)
-
-        # Extract features
-        support = support.to(self.device)
-        query = query.to(self.device)
+        y_s = task_dic['y_s']               # [n_task, shot]
+        y_q = task_dic['y_q']               # [n_task, n_query]
+        support = task_dic['x_s']           # [n_task, shot, feature_dim]
+        query = task_dic['x_q']             # [n_task, n_query, feature_dim]
 
         # Perform normalizations required
-        support = F.normalize(support, dim=2)
-        query = F.normalize(query, dim=2)
-        support = support.to(self.device)
-        query = query.to(self.device)
+        y_s = y_s.long().squeeze(2).to(self.device)
+        y_q = y_q.long().squeeze(2).to(self.device)
+        support = F.normalize(support, dim=2).to(self.device)
+        query = F.normalize(query, dim=2).to(self.device)
 
-        # Run adaptation
+        # Run methof
         self.run_method(support, query, y_s, y_q)
 
         # Extract adaptation logs
@@ -91,10 +74,12 @@ class ICI(object):
         return logs
 
     def run_method(self, support_features, query_features, support_labels, query_labels, **kwargs):
-        t0 = time.time()
+
         probs_q = []
         n_tasks, _, _ = support_features.size()
+
         for i in tqdm(range(n_tasks)):
+
             support_X, support_y = support_features.cpu().numpy()[i], support_labels.cpu().numpy()[i]
             way, num_support = support_labels.unique().size(0), len(support_X)
 
@@ -105,6 +90,7 @@ class ICI(object):
             X = self.embed(embeddings)
             H = np.dot(np.dot(X, np.linalg.inv(np.dot(X.T, X))), X.T)
             X_hat = np.eye(H.shape[0]) - H
+
             if self.max_iter == "auto":
                 # set a big number
                 self.max_iter = num_support + num_unlabel
@@ -112,7 +98,9 @@ class ICI(object):
                 self.max_iter = math.ceil(num_unlabel / self.step)
             else:
                 assert float(self.max_iter).is_integer()
+
             support_set = np.arange(num_support).tolist()
+
             # Train classifier
             self.classifier.fit(support_X, support_y)
 
@@ -131,14 +119,13 @@ class ICI(object):
                 self.classifier.fit(embeddings[support_set], y[support_set])
                 if len(support_set) == len(embeddings):
                     break
-            #probs_s = torch.from_numpy(self.classifier.predict_proba(support_X))
+
             prob_q = self.classifier.predict_proba(query_X)
             probs_q.append(prob_q)
             
         probs_q = torch.from_numpy(np.array(probs_q))
 
-        t1 = time.time()
-        self.record_info(new_time=t1-t0, probs_q=probs_q, y_q=query_labels)
+        self.record_info(probs_q=probs_q, y_q=query_labels)
 
 
     def expand(self, support_set, X_hat, y_hat, way, num_support, pseudo_y, embeddings, targets):

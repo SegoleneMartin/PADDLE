@@ -34,7 +34,6 @@ class PT_MAP(object):
     def init_info_lists(self):
         self.timestamps = []
         self.test_acc = []
-        self.test_F1 = []
 
     def getAccuracy(self, preds_q, y_q):        
         preds_q = preds_q.argmax(dim=2)
@@ -52,12 +51,12 @@ class PT_MAP(object):
     def power_transform(self, support, query):
         """
             inputs:
-                support : torch.Tensor of shape [n_task, s_shot, feature_dim]
-                query : torch.Tensor of shape [n_task, q_shot, feature_dim]
+                support : torch.Tensor of shape [n_task, shot, feature_dim]
+                query : torch.Tensor of shape [n_task, n_query, feature_dim]
 
             outputs:
-                support : torch.Tensor of shape [n_task, s_shot, feature_dim]
-                query : torch.Tensor of shape [n_task, q_shot, feature_dim]
+                support : torch.Tensor of shape [n_task, shot, feature_dim]
+                query : torch.Tensor of shape [n_task, n_query, feature_dim]
         """
         support[:,] = torch.pow(support[:,] + 1e-6, self.beta)
         query[:,] = torch.pow(query[:,] + 1e-6, self.beta)
@@ -66,10 +65,11 @@ class PT_MAP(object):
     def centerData(self, data, shot):
         """
             inputs:
-                data : torch.Tensor of shape [n_task, s_shot+q_shot, feature_dim]
+                data : torch.Tensor of shape [n_task, shoc + n_query, feature_dim]
                 shot: Shot
+
             outputs:
-                data : torch.Tensor of shape [n_task, s_shot+q_shot, feature_dim]
+                data : torch.Tensor of shape [n_task, shot + n_query, feature_dim]
         """
         support = data[:, :shot*self.n_ways, :]
         query = data[:, shot*self.n_ways:, :]
@@ -123,28 +123,19 @@ class PT_MAP(object):
     def record_info(self, y_q, preds_q, new_time):
         """
         inputs:
-            y_q : torch.Tensor of shape [n_tasks, q_shot]
-            q_pred : torch.Tensor of shape [n_tasks, q_shot]:
+            y_q : torch.Tensor of shape [n_tasks, n_query]
+            q_pred : torch.Tensor of shape [n_tasks, n_query]:
         """
 
         preds_q = preds_q.argmax(dim=2)
-        n_tasks, q_shot = preds_q.size()
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
         self.timestamps.append(new_time)
-        union = list(range(self.n_ways))
-        for i in range(n_tasks):
-            ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
-            preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            #union = set.union(set(ground_truth),set(preds))
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.test_F1.append(f1)
 
 
     def get_logs(self):
-        self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
         return {'timestamps': self.timestamps,
-                'acc': self.test_acc, 'F1': self.test_F1}
+                'acc': self.test_acc}
 
     def run_task(self, task_dic, shot):
         # Extract support and query
@@ -168,7 +159,6 @@ class PT_MAP(object):
         else:
             y_s = y_s.long().squeeze(2).to(self.device)
             y_q = y_q.long().squeeze(2).to(self.device)
-
 
         gaus_model = self.get_GaussianModel()
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,

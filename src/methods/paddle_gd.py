@@ -52,12 +52,12 @@ class PADDLE_GD(KM):
             t0 = time.time()
             
             # Data fitting term
-            l2_distances = torch.cdist(all_samples, self.w) ** 2  # [n_tasks, ns + nq, K]
-            all_p = torch.cat([y_s_one_hot.float(), self.u.float()], dim=1) # [n_task s, ns + nq, K]
+            l2_distances = torch.cdist(all_samples, self.w) ** 2  # [n_tasks, n_query + shot, K]
+            all_p = torch.cat([y_s_one_hot.float(), self.u.float()], dim=1) # [n_task s, n_query + shot, K]
             data_fitting = 1 / 2 * (l2_distances * all_p).sum((-2, -1)).sum(0)
 
             # Complexity term
-            marg_u = self.u.mean(1).to(self.device)  # [n_tasks, K]
+            marg_u = self.u.mean(1).to(self.device)  # [n_tasks, num_classes]
             marg_ent = - (marg_u * torch.log(marg_u + 1e-12)).sum(-1).sum(0)  # [n_tasks]
             loss = (data_fitting - self.alpha * marg_ent).to(self.device)
 

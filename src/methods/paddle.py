@@ -87,12 +87,12 @@ class KM(object):
         # Extract support and query
         y_s = task_dic['y_s']               # [n_task, shot]
         y_q = task_dic['y_q']               # [n_task, n_query]
-        x_s = task_dic['x_s']               # [n_task, shot, feature_dim]
-        x_q = task_dic['x_q']               # [n_task, n_query, feature_dim]
+        support = task_dic['x_s']           # [n_task, shot, feature_dim]
+        query = task_dic['x_q']             # [n_task, n_query, feature_dim]
 
         # Transfer tensors to GPU if needed
-        support = x_s.to(self.device)  
-        query = x_q.to(self.device)  
+        support = support.to(self.device)  
+        query = query.to(self.device)  
         y_s = y_s.long().squeeze(2).to(self.device)
         y_q = y_q.long().squeeze(2).to(self.device)
 
