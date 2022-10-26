@@ -1,5 +1,5 @@
 import torch.nn.functional as F
-from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, get_metric, Logger, extract_features
+from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, get_metric, Logger
 from tqdm import tqdm
 import torch
 import time
@@ -119,7 +119,7 @@ class Baseline(object):
         return {'timestamps': self.timestamps,
                 'acc': self.test_acc, 'F1': self.test_F1}
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the BASELINE inference
         inputs:
@@ -186,7 +186,7 @@ class Baseline(object):
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
         # Run adaptation
-        self.run_adaptation(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
+        self.run_method(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
         # Extract adaptation logs
         logs = self.get_logs()
@@ -218,7 +218,7 @@ class Baseline_PlusPlus(Baseline):
         self.test_acc.append((preds_q == y_q).float().mean(1, keepdim=True))
 
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the BASELINE++ inference
         inputs:

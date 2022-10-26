@@ -5,7 +5,7 @@ import time
 from numpy import linalg as LA
 import numpy as np
 from scipy.stats import mode
-from ..utils import get_metric, Logger, extract_features, get_one_hot
+from ..utils import get_metric, Logger, get_one_hot
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.optimize import linear_sum_assignment
 

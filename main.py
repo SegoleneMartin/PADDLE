@@ -8,11 +8,12 @@ import torch.utils.data
 import torch.utils.data.distributed
 torch.cuda.empty_cache()
 #from visdom_logger import VisdomLogger
-from src.utils import warp_tqdm, save_checkpoint, load_cfg_from_cfg_file, merge_cfg_from_list, Logger, get_log_file
+from src.utils import save_checkpoint, load_cfg_from_cfg_file, merge_cfg_from_list, Logger, get_log_file
 from src.trainer import Trainer
 from src.eval import Evaluator
 from src.optim import get_optimizer, get_scheduler
 from src.models.ingredient import get_model
+from tqdm import tqdm
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -106,8 +107,7 @@ def main():
                               num_batches=len(trainer.train_loader),
                               epochs=args.epochs,
                               args=args)
-    tqdm_loop = warp_tqdm(list(range(start_epoch, args.epochs)),
-                          disable_tqdm=False)
+    tqdm_loop = tqdm(list(range(start_epoch, args.epochs)))
     for epoch in tqdm_loop:
         # Do one epoch
         trainer.do_epoch(model=model, optimizer=optimizer, epoch=args.epoch,

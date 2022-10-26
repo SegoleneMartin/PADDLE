@@ -25,7 +25,7 @@ OPTIM:
 
 DATA:
     root: 'data'
-    dataset_path: 'mini_imagenet'
+    dataset_path: 'mini'
     num_classes_train: 64
     num_classes_test: 20
     batch_size_loader: 256

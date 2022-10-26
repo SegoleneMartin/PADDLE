@@ -26,7 +26,7 @@ OPTIM:
 DATA:
     dataset: 'tiered'
     root: 'data'
-    dataset_path: 'tiered_imagenet/data'
+    dataset_path: 'tiered/data'
     num_classes_train: 351
     num_classes_test: 160
     batch_size_loader: 256

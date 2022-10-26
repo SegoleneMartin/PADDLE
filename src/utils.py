@@ -36,13 +36,13 @@ def get_features(model, samples):
     features = F.normalize(features.view(features.size(0), -1), dim=1)
     return features
 
-def get_features_simple(model, samples):
+
+def get_features(model, samples):
     model.eval()
     with torch.no_grad():
         features, _ = model(samples, True)
     #features = F.normalize(features.view(features.size(0), -1), dim=1)
     return features
-
 
 
 def get_loss(logits_s, logits_q, labels_s, lambdaa):
@@ -122,7 +122,7 @@ def setup_logger(filepath):
     return logger
 
 
-def warp_tqdm(data_loader, disable_tqdm):
+def wrap_tqdm(data_loader, disable_tqdm):
     if disable_tqdm:
         tqdm_loader = data_loader
     else:
@@ -305,6 +305,7 @@ def merge_cfg_from_list(cfg: CfgNode,
             setattr(new_cfg, subkey, value)
     return new_cfg
 
+
 class Logger:
     def __init__(self, module_name, filename):
         self.module_name = module_name
@@ -357,11 +358,13 @@ class Logger:
     def exception(self, msg):
         self.logger.exception(msg)
 
+
 def make_log_dir(log_path, dataset, backbone, method, sampling):
     log_dir = os.path.join(log_path, dataset, backbone, sampling, method)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
     return log_dir
+
 
 def get_log_file(log_path, dataset, backbone, method, sampling):
     log_dir = make_log_dir(log_path=log_path, dataset=dataset, backbone=backbone, sampling=sampling, method=method)
@@ -373,20 +376,54 @@ def get_log_file(log_path, dataset, backbone, method, sampling):
     return filename
 
 
-def extract_features(model, support, query):
+def extract_features(model, model_path, model_tag, used_set, used_set_name, fresh_start, loaders_dic):
+    """
+    inputs:
+        model : The loaded model containing the feature extractor
+        loaders_dic : Dictionnary containing training and testing loaders
+        model_path : Where was the model loaded from
+        model_tag : Which model ('final' or 'best') to load
+        used_set : Set used between 'test' and 'val'
+        k_eff : Number of ways for the task
+
+    returns :
+        extracted_features_dic : Dictionnary containing all extracted features and labels
+    """
+
+    # Load features from memory if previously saved ...
+    save_dir = os.path.join(model_path, model_tag, used_set_name)
+    filepath = os.path.join(save_dir, 'output.plk')
+    if os.path.isfile(filepath) and (not fresh_start):
+        extracted_features_dic = load_pickle(filepath)
+        print(" ==> Features loaded from {}".format(filepath))
+        return extracted_features_dic
+
+    # ... otherwise just extract them
+    else:
+        print(" ==> Beginning feature extraction")
+        os.makedirs(save_dir, exist_ok=True)
+
     model.eval()
     with torch.no_grad():
-        # Extracting features
-        outputs_s = []
-        outputs_q = []
-        for i in range(len(support)):
-            output_s, _ = model(support[i], feature=True)
-            output_q, _ = model(query[i], feature=True)
-            outputs_s.append(output_s)
-            outputs_q.append(output_q)
-        support = torch.stack(outputs_s)
-        query = torch.stack(outputs_q)
-    return support, query
+
+        all_features = []
+        all_labels = []
+        tqdm_loop = tqdm(loaders_dic[used_set])
+        for i, (inputs, labels, _) in enumerate(tqdm_loop):
+            inputs = inputs.to(self.device).unsqueeze(0)
+            labels = torch.Tensor([labels])
+            outputs, _ = model(inputs, True)
+            all_features.append(outputs.cpu())
+            all_labels.append(labels)
+        all_features = torch.cat(all_features, 0)
+        all_labels = torch.cat(all_labels, 0)
+        extracted_features_dic = {'concat_features': all_features,
+                                    'concat_labels': all_labels
+                                    }
+    print(" ==> Saving features to {}".format(filepath))
+    save_pickle(filepath, extracted_features_dic)
+    return extracted_features_dic
+
 
 def extract_mean_features(model, train_loader, args, logger, device):
     """
@@ -413,7 +450,7 @@ def extract_mean_features(model, train_loader, args, logger, device):
         model.eval()
         with torch.no_grad():
             out_mean, fc_out_mean = [], []
-            for i, (inputs, labels, _) in enumerate(warp_tqdm(train_loader, False)):
+            for i, (inputs, labels, _) in enumerate(wrap_tqdm(train_loader, False)):
                 inputs = inputs.to(device)
                 outputs, fc_outputs = model(inputs, True)
                 out_mean.append(outputs.cpu().data.numpy())
@@ -431,26 +468,3 @@ def extract_mean_features(model, train_loader, args, logger, device):
         out_mean, fc_out_mean = load_pickle(save_dir + '/output_mean.plk')
         logger.info(" ==> Features loaded from {}".format(filepath_mean))
         return torch.from_numpy(out_mean), torch.from_numpy(fc_out_mean)
-
-def download_file_from_google_drive(id, destination):
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                return value
-        return None
-
-    def save_response_content(response, destination):
-        CHUNK_SIZE = 32768
-        with open(destination, "wb") as f:
-            for chunk in response.iter_content(CHUNK_SIZE):
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-
-    URL = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-    response = session.get(URL, params={'id': id}, stream=True)
-    token = get_confirm_token(response)
-    if token:
-        params = {'id': id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-    save_response_content(response, destination)

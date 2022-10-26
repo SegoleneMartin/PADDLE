@@ -102,14 +102,14 @@ class ICI(object):
         query = query.to(self.device)
 
         # Run adaptation
-        self.run_adaptation(support, query, y_s, y_q)
+        self.run_method(support, query, y_s, y_q)
 
         # Extract adaptation logs
         logs = self.get_logs()
 
         return logs
 
-    def run_adaptation(self, support_features, query_features, support_labels, query_labels, **kwargs):
+    def run_method(self, support_features, query_features, support_labels, query_labels, **kwargs):
         t0 = time.time()
         probs_q = []
         n_tasks, _, _ = support_features.size()

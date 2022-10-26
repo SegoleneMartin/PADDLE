@@ -5,9 +5,7 @@ import time
 from numpy import linalg as LA
 import numpy as np
 from scipy.stats import mode
-from ..utils import get_metric, Logger, extract_features, get_one_hot
-from sklearn.metrics import accuracy_score, f1_score
-from scipy.optimize import linear_sum_assignment
+from ..utils import get_metric, Logger, get_one_hot
 
 class BDCSPN(object):
     def __init__(self, model, device, log_file, args):
@@ -29,42 +27,29 @@ class BDCSPN(object):
         self.logger.del_logger()
 
     def init_info_lists(self):
-        self.timestamps = []
         self.test_acc = []
-        self.test_F1 = []
-
 
     def record_info(self, y_q, preds_q):
         """
         inputs:
-            y_q : torch.Tensor of shape [n_tasks, q_shot]
-            q_pred : torch.Tensor of shape [n_tasks, q_shot]:
+            y_q : torch.Tensor of shape [n_tasks, n_query]
+            q_pred : torch.Tensor of shape [n_tasks, n_query]:
         """
-        n_tasks, q_shot = preds_q.shape
         preds_q = torch.from_numpy(preds_q)
         y_q = torch.from_numpy(y_q)
         accuracy = (preds_q == y_q).float().mean(1, keepdim=True)
-
         self.test_acc.append(accuracy)
-        union = list(range(self.n_ways))
-        for i in range(n_tasks):
-            ground_truth = list(y_q[i].reshape(q_shot).cpu().numpy())
-            preds = list(preds_q[i].reshape(q_shot).cpu().numpy())
-            f1 = f1_score(ground_truth, preds, average='weighted', labels=union, zero_division=1)
-            self.test_F1.append(f1)
-        pass
 
     def get_logs(self):
         self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
-        return {'timestamps': self.timestamps, 'F1': self.test_F1,
-                'acc': self.test_acc}
+        return {'acc': self.test_acc}
 
     def normalization(self, z_s, z_q, train_mean):
         """
             inputs:
-                z_s : np.Array of shape [n_task, s_shot, feature_dim]
-                z_q : np.Array of shape [n_task, q_shot, feature_dim]
+                z_s : np.Array of shape [n_task, shot, feature_dim]
+                z_q : np.Array of shape [n_task, n_query, feature_dim]
                 train_mean: np.Array of shape [feature_dim]
         """
         z_s = z_s.cpu()
@@ -84,12 +69,12 @@ class BDCSPN(object):
     def proto_rectification(self, y_s, support, query, shot):
         """
             inputs:
-                support : np.Array of shape [n_task, s_shot, feature_dim]
-                query : np.Array of shape [n_task, q_shot, feature_dim]
-                shot: Shot
+                support : np.Array of shape [n_task, shot, feature_dim]
+                query : np.Array of shape [n_task, n_query, feature_dim]
+                shot: scalar
 
             ouput:
-                proto_weights: prototype of each class
+                proto_weights: prototype of each class [n_task, n_query, num_classes]
         """
         eta = support.mean(1) - query.mean(1)  # Shifting term
         query = query + eta[:, np.newaxis, :]  # Adding shifting term to each normalized query feature
@@ -100,13 +85,11 @@ class BDCSPN(object):
         weights = one_hot.transpose(1, 2).matmul(support)
         init_prototypes = weights / counts
 
-
         proto_weights = []
         for j in tqdm(range(self.number_tasks)):
+
             distance = get_metric('cosine')(init_prototypes[j], query_aug[j])
             predict = torch.argmin(distance, dim=1)
-            if self.dataset == 'inatural' and self.used_set_support == 'repr':
-                predict = y_s[j][predict]
             cos_sim = F.cosine_similarity(query_aug[j][:, None, :], init_prototypes[j][None, :, :], dim=2)  # Cosine similarity between X' and Pn
             cos_sim = self.temp * cos_sim
             W = F.softmax(cos_sim, dim=1)
@@ -117,13 +100,22 @@ class BDCSPN(object):
                 proto = init_prototypes[j]
 
             proto_weights.append(proto)
+
         proto_weights = np.stack(proto_weights, axis=0)
         return proto_weights
 
     def run_task(self, task_dic, shot):
+        """
+        inputs:
+            task_dic : dictionnary with n_tasks few-shot tasks
+            shot : scalar, number of shots
+        """
+
         # Extract support and query
-        y_s, y_q = task_dic['y_s'], task_dic['y_q']
-        x_s, x_q = task_dic['x_s'], task_dic['x_q']
+        y_s = task_dic['y_s']               # [n_task, shot]
+        y_q = task_dic['y_q']               # [n_task, n_query]
+        x_s = task_dic['x_s']               # [n_task, shot, feature_dim]
+        x_q = task_dic['x_q']               # [n_task, n_query, feature_dim]
         train_mean = task_dic['train_mean']
 
         # Extract features
@@ -138,24 +130,23 @@ class BDCSPN(object):
         query = query.numpy()
         y_q = y_q.numpy()
 
-        # Run adaptation
-        self.run_prediction(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
+        # Run method
+        self.run_method(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
         # Extract adaptation logs
         logs = self.get_logs()
 
         return logs
 
-    def run_prediction(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the BD-CSPN inference
         inputs:
-            support : torch.Tensor of shape [n_task, s_shot, feature_dim]
-            query : torch.Tensor of shape [n_task, q_shot, feature_dim]
-            y_s : torch.Tensor of shape [n_task, s_shot]
-            y_q : torch.Tensor of shape [n_task, q_shot]
+            support : torch.Tensor of shape [n_task, shot, feature_dim]
+            query : torch.Tensor of shape [n_task, n_query, feature_dim]
+            y_s : torch.Tensor of shape [n_task, shot]
+            y_q : torch.Tensor of shape [n_task, n_query]
         """
-        t0 = time.time()
         self.logger.info(" ==> Executing predictions on {} shot tasks ...".format(shot))
         out_list = []
         for i in tqdm(range(self.number_tasks)):
@@ -166,6 +157,7 @@ class BDCSPN(object):
             nearest_samples = np.take(y_s_i, idx)
             out = mode(nearest_samples, axis=0)[0]
             out_list.append(out)
-        n_tasks, q_shot, feature_dim = query.shape
-        out = np.stack(out_list, axis=0).reshape((n_tasks, q_shot))
+
+        n_tasks, n_query, feature_dim = query.shape
+        out = np.stack(out_list, axis=0).reshape((n_tasks, n_query))
         self.record_info(y_q=y_q, preds_q=out)

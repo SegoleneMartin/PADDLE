@@ -2,7 +2,7 @@ import torch
 import time
 import torch.nn as nn
 import numpy as np
-from src.utils import warp_tqdm, get_metric, AverageMeter
+from src.utils import wrap_tqdm, get_metric, AverageMeter
 from src.datasets import CategoriesSampler, get_dataset, get_dataloader
 
 class Trainer:
@@ -34,7 +34,7 @@ class Trainer:
         model.train()
         steps_per_epoch = len(self.train_loader)
         end = time.time()
-        tqdm_train_loader = warp_tqdm(self.train_loader, disable_tqdm)
+        tqdm_train_loader = wrap_tqdm(self.train_loader, disable_tqdm)
         for i, (input, target, _) in enumerate(tqdm_train_loader):
 
             input, target = input.to(self.device), target.to(self.device, non_blocking=True)
@@ -99,7 +99,7 @@ class Trainer:
         model.eval()
 
         with torch.no_grad():
-            tqdm_test_loader = warp_tqdm(self.val_loader, disable_tqdm)
+            tqdm_test_loader = wrap_tqdm(self.val_loader, disable_tqdm)
             for i, (inputs, target, _) in enumerate(tqdm_test_loader):
                 inputs, target = inputs.to(self.device), target.to(self.device, non_blocking=True)
                 output = model(inputs, feature=True)[0].cuda(0)

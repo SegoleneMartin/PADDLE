@@ -24,25 +24,11 @@ def get_one_hot(y_s):
     return one_hot
 
 
-def get_logs_path(model_path, method, shot):
-    exp_path = '_'.join(model_path.split('/')[1:])
-    file_path = os.path.join('tmp', exp_path, method)
-    os.makedirs(file_path, exist_ok=True)
-    return os.path.join(file_path, f'{shot}.txt')
-
-
 def get_features(model, samples):
-    features, _ = model(samples, True)
-    features = F.normalize(features.view(features.size(0), -1), dim=1)
-    return features
-
-def get_features_simple(model, samples):
     model.eval()
     with torch.no_grad():
         features, _ = model(samples, True)
-    #features = F.normalize(features.view(features.size(0), -1), dim=1)
     return features
-
 
 
 def get_loss(logits_s, logits_q, labels_s, lambdaa):
@@ -122,7 +108,7 @@ def setup_logger(filepath):
     return logger
 
 
-def warp_tqdm(data_loader, disable_tqdm):
+def wrap_tqdm(data_loader, disable_tqdm):
     if disable_tqdm:
         tqdm_loader = data_loader
     else:
@@ -411,7 +397,7 @@ def extract_mean_features(model, train_loader, args, logger, device):
         model.eval()
         with torch.no_grad():
             out_mean, fc_out_mean = [], []
-            for i, (inputs, labels, _) in enumerate(warp_tqdm(train_loader, False)):
+            for i, (inputs, labels, _) in enumerate(wrap_tqdm(train_loader, False)):
                 inputs = inputs.to(device)
                 outputs, fc_outputs = model(inputs, True)
                 out_mean.append(outputs.cpu().data.numpy())

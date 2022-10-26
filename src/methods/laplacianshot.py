@@ -11,7 +11,7 @@ from scipy import sparse
 import matplotlib
 matplotlib.use('Agg')
 from sklearn.neighbors import NearestNeighbors
-from ..utils import get_metric, Logger, extract_features, get_one_hot
+from ..utils import get_metric, Logger, get_one_hot
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.optimize import linear_sum_assignment
 

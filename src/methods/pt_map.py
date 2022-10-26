@@ -6,7 +6,7 @@ import time
 import numpy as np
 import math
 from ..models.GaussianModel import GaussianModel
-from src.utils import Logger, extract_features
+from src.utils import Logger
 from sklearn.metrics import accuracy_score, f1_score
 
 class PT_MAP(object):
@@ -104,7 +104,7 @@ class PT_MAP(object):
         # update centroids
         model.updateFromEstimate(m_estimates, self.alpha)
 
-    def run_adaptation(self, model, data, y_s, y_q, shot):
+    def run_method(self, model, data, y_s, y_q, shot):
         _, preds_q = model.getProbas(data=data, y_s=y_s, n_tasks=self.number_tasks, n_sum_query=self.n_sum_query,
                                           n_queries=self.n_queries, shot=shot)
 
@@ -174,7 +174,7 @@ class PT_MAP(object):
         gaus_model.initFromLabelledDatas(data=data[:, :y_s.size()[1], :], y_s=y_s, n_tasks=self.number_tasks,
                                          shot=shot, k_eff=self.n_ways, n_queries=0, n_nfeat=data.size(2))
 
-        self.run_adaptation(model=gaus_model, data=data, y_s=y_s, y_q=y_q, shot=shot)
+        self.run_method(model=gaus_model, data=data, y_s=y_s, y_q=y_q, shot=shot)
 
         logs = self.get_logs()
 

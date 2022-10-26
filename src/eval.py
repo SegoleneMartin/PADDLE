@@ -1,5 +1,5 @@
 import numpy as np
-from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features_simple
+from src.utils import compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.paddle import PADDLE
 from src.methods.soft_km import SOFT_KM
@@ -21,56 +21,6 @@ class Evaluator:
         self.args = args
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
-
-        
-    def extract_features(self, model, model_path, model_tag, used_set, used_set_name, fresh_start, loaders_dic):
-        """
-        inputs:
-            model : The loaded model containing the feature extractor
-            loaders_dic : Dictionnary containing training and testing loaders
-            model_path : Where was the model loaded from
-            model_tag : Which model ('final' or 'best') to load
-            used_set : Set used between 'test' and 'val'
-            k_eff : Number of ways for the task
-
-        returns :
-            extracted_features_dic : Dictionnary containing all extracted features and labels
-        """
-
-        # Load features from memory if previously saved ...
-        save_dir = os.path.join(model_path, model_tag, used_set_name)
-        filepath = os.path.join(save_dir, 'output.plk')
-        if os.path.isfile(filepath) and (not fresh_start):
-            extracted_features_dic = load_pickle(filepath)
-            print(" ==> Features loaded from {}".format(filepath))
-            return extracted_features_dic
-
-        # ... otherwise just extract them
-        else:
-            print(" ==> Beginning feature extraction")
-            os.makedirs(save_dir, exist_ok=True)
-
-        model.eval()
-        with torch.no_grad():
-
-            all_features = []
-            all_labels = []
-            for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic[used_set], False)):
-                inputs = inputs.to(self.device).unsqueeze(0)
-                labels = torch.Tensor([labels])
-                outputs, _ = model(inputs, True)
-                all_features.append(outputs.cpu())
-                all_labels.append(labels)
-            all_features = torch.cat(all_features, 0)
-            all_labels = torch.cat(all_labels, 0)
-            extracted_features_dic = {'concat_features': all_features,
-                                      'concat_labels': all_labels
-                                      }
-        print(" ==> Saving features to {}".format(filepath))
-        save_pickle(filepath, extracted_features_dic)
-        return extracted_features_dic
-                
-                
 
     def run_full_evaluation(self, model):
         """
@@ -109,13 +59,13 @@ class Evaluator:
             train_mean = torch.load(name_file)
 
         # Extract features (just load them if already in memory)
-        extracted_features_dic_support = self.extract_features(model=model,
+        extracted_features_dic_support = extract_features(model=model,
                                                        model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
                                                        loaders_dic=dataset, used_set='support',
                                                        used_set_name = self.args.used_set_support,
                                                                fresh_start=self.args.fresh_start)
         if self.args.used_set_support != self.args.used_set_query:
-            extracted_features_dic_query = self.extract_features(model=model,
+            extracted_features_dic_query = extract_features(model=model,
                                                        model_path=self.args.ckpt_path, model_tag=self.args.model_tag,
                                                        loaders_dic=dataset, used_set='query', 
                                                         used_set_name = self.args.used_set_query,

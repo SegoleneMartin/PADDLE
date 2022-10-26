@@ -5,5 +5,4 @@ METHOD:
   lr_alpha_tim: 1e-4
   iter: 1000
   entropies: ['Shannon', 'Alpha', 'Alpha'] # [Xent, H(Y), H(Y|X)]
-  alpha_values: [5.0, 6.0, 5.0] # [Xent, H(Y), H(Y|X)]
-  use_tuned_alpha_values: False
+  alpha_values: [5.0, 7.0, 5.0] # [Xent, H(Y), H(Y|X)]

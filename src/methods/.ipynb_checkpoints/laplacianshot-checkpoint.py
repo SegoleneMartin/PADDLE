@@ -34,10 +34,8 @@ class LaplacianShot(object):
         self.log_file = log_file
         self.logger = Logger(__name__, self.log_file)
         self.shots = args.shots
-        if args.use_tuned_lmd:
-            self.lmd = self.get_tuned_lmd()
-        else:
-            self.lmd = args.lmd
+        
+        self.lmd = args.lmd
         self.timestamps = []
         self.ent_energy = []
         self.test_acc = []

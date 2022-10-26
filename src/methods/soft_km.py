@@ -1,7 +1,7 @@
 # Adaptation of the publicly available code of the NeurIPS 2020 paper entitled "TIM: Transductive Information Maximization":
 # https://github.com/mboudiaf/TIM
 import torch.nn.functional as F
-from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, Logger, extract_features
+from src.utils import get_mi, get_cond_entropy, get_entropy, get_one_hot, Logger
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -148,7 +148,7 @@ class KM(object):
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
 
         # Run adaptation
-        self.run_adaptation(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
+        self.run_method(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
         # Extract adaptation logs
         logs = self.get_logs()
@@ -189,7 +189,7 @@ class SOFT_KM(KM):
         den  = self.p.sum(1) + y_s_one_hot.sum(1)
         self.weights = torch.div(num, den.unsqueeze(2))
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the TIM-ADM inference
         inputs:

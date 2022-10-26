@@ -1,5 +1,5 @@
 import numpy as np
-from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features_simple
+from src.utils import wrap_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features, extract_features, get_features
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.paddle import PADDLE
 from src.methods.soft_km import SOFT_KM
@@ -51,7 +51,7 @@ class Evaluator:
                 test_loader_support = get_dataloader(sets=dataset['support'], args=self.args,
                                              sampler=sampler, pin_memory=False)
                 for (data_support, labels_support, _) in test_loader_support:
-                    features_support = get_features_simple(model, data_support)
+                    features_support = get_features(model, data_support)
                     support.append(features_support)
                     y_s.append(labels_support)
               
@@ -94,7 +94,7 @@ class Evaluator:
 
             all_features = []
             all_labels = []
-            for i, (inputs, labels, _) in enumerate(warp_tqdm(loaders_dic[used_set], False)):
+            for i, (inputs, labels, _) in enumerate(wrap_tqdm(loaders_dic[used_set], False)):
                 inputs = inputs.to(self.device).unsqueeze(0)
                 labels = torch.Tensor([labels])
                 outputs, _ = model(inputs, True)

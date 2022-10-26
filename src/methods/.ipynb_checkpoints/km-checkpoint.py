@@ -153,7 +153,7 @@ class KM(object):
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
 
         # Run adaptation
-        self.run_adaptation(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
+        self.run_method(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
         # Extract adaptation logs
         logs = self.get_logs()
@@ -194,7 +194,7 @@ class SOFT_KM(KM):
         den  = self.p.sum(1) + y_s_one_hot.sum(1)
         self.weights = torch.div(num, den.unsqueeze(2))
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the TIM-ADM inference
         inputs:

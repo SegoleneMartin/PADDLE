@@ -1,5 +1,5 @@
 import numpy as np
-from src.utils import warp_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features
+from src.utils import wrap_tqdm, compute_confidence_interval, load_checkpoint, Logger, extract_mean_features
 from src.methods.tim import ALPHA_TIM, TIM_GD
 from src.methods.paddle import PADDLE
 from src.methods.soft_km import SOFT_KM

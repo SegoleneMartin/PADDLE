@@ -1,5 +1,5 @@
 import torch
-from src.utils import warp_tqdm, Logger
+from src.utils import wrap_tqdm, Logger
 import os
 from itertools import cycle
 

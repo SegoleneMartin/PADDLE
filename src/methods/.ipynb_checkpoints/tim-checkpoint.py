@@ -151,7 +151,7 @@ class TIM(object):
                 'entropy': self.entropy, 'cond_entropy': self.cond_entropy,
                 'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1}
 
-    def run_adaptation(self, support, query, y_s, y_q):
+    def run_method(self, support, query, y_s, y_q):
         """
         Corresponds to the baseline (no transductive inference = SimpleShot)
         inputs:
@@ -191,7 +191,7 @@ class TIM(object):
         # Init basic prototypes
         self.init_weights(support=support, y_s=y_s, query=query, y_q=y_q)
         # Run adaptation
-        self.run_adaptation(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
+        self.run_method(support=support, query=query, y_s=y_s, y_q=y_q, shot=shot)
 
         # Extract adaptation logs
         logs = self.get_logs()
@@ -203,7 +203,7 @@ class TIM_GD(TIM):
         super().__init__(model=model, device=device, log_file=log_file, args=args)
         self.lr = float(args.lr_tim)
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the TIM-GD inference
         inputs:
@@ -265,7 +265,7 @@ class ALPHA_TIM(TIM):
         elif shot >= 5:
             self.alpha_values = [7.0, 7.0, 7.0]
 
-    def run_adaptation(self, support, query, y_s, y_q, shot):
+    def run_method(self, support, query, y_s, y_q, shot):
         """
         Corresponds to the ALPHA-TIM inference
         inputs:
