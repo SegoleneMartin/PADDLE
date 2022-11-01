@@ -33,14 +33,10 @@ DATA:
     num_workers: 0
     disable_random_resize: False
     jitter: False
-    path: 'data'
     split_dir: 'split/mini'
-    target_data_path:
-    target_split_dir:
 
 DISTRIBUTED:
     cuda: True
-    visdom_port:
     seed: 2020
     ckpt_path: 'checkpoints/mini/softmax/resnet18' # path model checkpoint
     log_path: 'logs' # path to where log files will be saved 

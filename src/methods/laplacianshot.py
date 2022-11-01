@@ -37,7 +37,6 @@ class LaplacianShot(object):
         self.timestamps = []
         self.ent_energy = []
         self.test_acc = []
-        self.test_F1 = []
 
     def __del__(self):
         self.logger.del_logger()

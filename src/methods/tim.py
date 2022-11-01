@@ -101,14 +101,13 @@ class TIM(object):
 
     def get_logs(self):
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
-        self.test_F1 = np.array([self.test_F1])
         self.criterions = torch.stack(self.criterions, dim=0).detach().cpu().numpy()
         self.cond_entropy = torch.cat(self.cond_entropy, dim=1).cpu().numpy()
         self.entropy = torch.cat(self.entropy, dim=1).cpu().numpy()
         self.mutual_infos = torch.cat(self.mutual_infos, dim=1).cpu().numpy()
         return {'timestamps': self.timestamps, 'mutual_info': self.mutual_infos,
                 'entropy': self.entropy, 'cond_entropy': self.cond_entropy,
-                'acc': self.test_acc, 'losses': self.losses, 'F1': self.test_F1, 'criterions':self.criterions}
+                'acc': self.test_acc, 'losses': self.losses, 'criterions':self.criterions}
 
     def run_method(self, support, query, y_s, y_q):
         """

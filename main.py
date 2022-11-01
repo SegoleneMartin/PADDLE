@@ -7,7 +7,6 @@ import torch.backends.cudnn as cudnn
 import torch.utils.data
 import torch.utils.data.distributed
 torch.cuda.empty_cache()
-#from visdom_logger import VisdomLogger
 from src.utils import save_checkpoint, load_cfg_from_cfg_file, merge_cfg_from_list, Logger, get_log_file
 from src.trainer import Trainer
 from src.eval import Evaluator
@@ -32,7 +31,6 @@ def parse_args() -> argparse.Namespace:
     if args.opts is not None:
         cfg = merge_cfg_from_list(cfg, args.opts)
 
-
     if cfg.n_ways == 'full':
         cfg.n_ways = cfg.num_classes_test
     return cfg
@@ -40,15 +38,13 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
-    device = torch.device("cpu")
-    #callback = None if args.visdom_port is None else VisdomLogger(port=args.visdom_port)
     callback = None
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
         cudnn.deterministic = True
-    #torch.cuda.set_device(0)
+    torch.cuda.set_device(0)
 
     # init logger
     log_file = get_log_file(log_path=args.log_path, dataset=args.dataset,

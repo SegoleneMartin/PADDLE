@@ -3,7 +3,7 @@
 
 ##  Introduction
 This repo contains the code for our NeurIPS 2022 paper "Towards Practical Few-shot Query Sets:
-Transductive Minimum Description Length Inference", available at INSERT LINK. 
+Transductive Minimum Description Length Inference", available at https://arxiv.org/abs/2210.14545. 
 
 It includes our two main contributions:
 
@@ -18,7 +18,18 @@ Results provided in the paper can be reproduced with this repo. Code was develop
 ## 1. Getting started
 
 ### 1.1. Requirements
-Create a new conda environment using the .yml file provided.
+
+- python 3.8
+- pytorch=1.1
+- loguru=0.5.3
+- matplotlib
+- pyyalm
+- scikit-learn
+- torchvision
+- tqdm
+- cvxpy
+
+You can create a new conda environment using the .yml file provided.
 ```bash
 conda env create -f paddle_env.yml
 ```
@@ -31,8 +42,8 @@ The downloaded datasets should be placed in the folder data/ the following way:
     .
     ├── ...
     ├── data                    
-    │   ├── mini_imagenet          
-    │   ├── tiered_imagenet        
+    │   ├── mini       
+    │   ├── tiered        
     │   └── inatural               
     └── ...
 
@@ -97,6 +108,7 @@ If you wish to reproduce all the results provided in the .txt files, you could u
 If you wish to tune the parameters of the methods from zero, you can use and modify scripts/tune_parameters.sh.
 
 # Acknowledgements
+
 Special thanks to the authors of NeurIPS 2020 paper "TIM: Transductive Information Maximization" (TIM) (https://github.com/mboudiaf/TIM) and to the authors of NeurIPS 2021 paper "Realistic evaluation of transductive few-shot learning" (https://github.com/oveilleux/Realistic_Transductive_Few_Shot) for publicly sharing their pre-trained models and their source code from which this repo was inspired from. 
 
 

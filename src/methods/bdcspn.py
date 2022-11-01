@@ -41,7 +41,6 @@ class BDCSPN(object):
         self.test_acc.append(accuracy)
 
     def get_logs(self):
-        self.test_F1 = np.array([self.test_F1])
         self.test_acc = torch.cat(self.test_acc, dim=1).cpu().numpy()
         return {'acc': self.test_acc}
 

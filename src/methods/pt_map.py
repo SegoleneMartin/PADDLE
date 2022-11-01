@@ -7,7 +7,6 @@ import numpy as np
 import math
 from ..models.GaussianModel import GaussianModel
 from src.utils import Logger
-from sklearn.metrics import accuracy_score, f1_score
 
 class PT_MAP(object):
     def __init__(self, model, device, log_file, args):

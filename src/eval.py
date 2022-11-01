@@ -37,10 +37,6 @@ class Evaluator:
         dataset = {}
         loader_info = {'aug': False, 'out_name': False}
 
-        if self.args.target_data_path is not None:  # This mean we are in the cross-domain scenario
-            loader_info.update({'path': self.args.target_data_path,
-                                'split_dir': self.args.target_split_dir})
-
         support_set = get_dataset(self.args.used_set_support, args=self.args, **loader_info)
         dataset.update({'support': support_set})
         query_set = get_dataset(self.args.used_set_query, args=self.args, **loader_info)
@@ -79,11 +75,9 @@ class Evaluator:
         all_labels_query = extracted_features_dic_query['concat_labels'].long()
 
         results = []
-        results_F1 = []
         for shot in self.args.shots:
         
             results_task = []
-            results_task_F1 = []
             for i in range(int(self.args.number_tasks/self.args.batch_size)):
                 sampler = CategoriesSampler(all_labels_support, all_labels_query, self.args.batch_size,
                                         self.args.k_eff, self.args.n_ways, shot, self.args.n_query, 
@@ -108,17 +102,13 @@ class Evaluator:
                 # Run task
                 logs = method.run_task(task_dic=tasks, shot=shot)
                 acc_mean, acc_conf = compute_confidence_interval(logs['acc'][:, -1])
-                F1_mean, F1_conf = compute_confidence_interval(logs['F1'][:, -1])
 
                 results_task.append(acc_mean)
-                results_task_F1.append(F1_mean)
                 del method
                 del tasks
             results.append(results_task)
-            results_F1.append(results_task_F1)
 
         mean_accuracies = np.asarray(results).mean(1)
-        mean_F1s = np.asarray(results_F1).mean(1)
 
         if self.args.name_method == 'ALPHA-TIM':
             param = self.args.alpha_values[1]
