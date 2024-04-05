@@ -91,7 +91,7 @@ For _mini-imagenet_ and _tiered-imagenet_, and for each method that requiered pa
 
 If you want to reproduce the results in the realistic few-shot setting proposed in the paper, on _mini-Imagenet_, for $20$-shots tasks with $K_{\mathrm{eff}} = 5$, using a ResNet-18 and PADDLE classifier, go to the root of the directory and execute:
 ```python
-python3 -m src.main --opts dataset mini shots [20] k_eff 5 arch resnet18 method paddle 
+python3 -m main --opts dataset mini shots [20] k_eff 5 arch resnet18 method paddle 
 ```
 You might also want to directly modify the options in the following config file: config/main_config.yalm
 

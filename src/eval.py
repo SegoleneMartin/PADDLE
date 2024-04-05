@@ -7,7 +7,7 @@ from src.methods.paddle_gd import PADDLE_GD
 from src.methods.ici import ICI
 from src.methods.laplacianshot import LaplacianShot
 from src.methods.bdcspn import BDCSPN
-from src.methods.baseline import Baseline, Baseline_PlusPlus
+from src.methods.baseline import Baseline
 from src.methods.pt_map import PT_MAP
 from src.datasets import Tasks_Generator, get_dataset, get_dataloader, SamplerSupport, SamplerQuery, CategoriesSampler
 import torch
