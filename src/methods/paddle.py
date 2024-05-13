@@ -123,7 +123,7 @@ class PADDLE(KM):
             p : torch.tensor of shape [n_tasks, n_query, num_class]
 
         returns:
-            v : torch.Tensor of shape [n_task, n_query, num_class]
+            v : torch.Tensor of shape [n_task, num_class]
         """
 
         n_query = p.size(1)
