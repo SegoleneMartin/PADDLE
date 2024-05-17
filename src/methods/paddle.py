@@ -31,10 +31,10 @@ class KM(object):
             logits : torch.Tensor of shape [n_task, shot, num_class]
         """
         n_tasks = samples.size(0)
-        logits = (- samples.matmul(self.w.transpose(1, 2)) \
-                              + 1 / 2 * (self.w**2).sum(2).view(n_tasks, 1, -1) \
-                              + 1 / 2 * (samples**2).sum(2).view(n_tasks, -1, 1))  #
-        return - logits
+        logits = (samples.matmul(self.w.transpose(1, 2)) \
+                              - 1 / 2 * (self.w**2).sum(2).view(n_tasks, 1, -1) \
+                              - 1 / 2 * (samples**2).sum(2).view(n_tasks, -1, 1))  #
+        return logits
 
     def init_w(self, support, y_s):
         """
